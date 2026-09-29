@@ -20,6 +20,7 @@ Manuscript repository for the LLM-humanchoice project. It currently holds the **
 | `sections/03_method.tex` | D-FSP estimator, label selection rule, post-training loss |
 | `sections/04_properties.tex` | Proved properties (range, value of the judge distribution, post-training bound) and theoretical goals |
 | `sections/05_experiments.tex` | E1–E5 and possible outcomes |
+| `sections/fig_overview.tex` | Figure 1: overview flowchart (TikZ, compiled with the document) |
 | `references.bib` | Bibliography |
 
 ## Local build

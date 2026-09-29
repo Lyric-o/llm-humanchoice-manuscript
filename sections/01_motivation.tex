@@ -47,7 +47,7 @@ reduces to a standard kernel estimator where it is not, and it attains the minim
 setting is scalar regression and does not involve preference data or model training.
 
 We apply this method to LLM judges, with the judge's win probability in the role of the pretrained
-predictor. The project has three parts.
+predictor. The project has three parts, shown together in Figure~\ref{fig:overview}.
 \begin{enumerate}
   \item \textbf{Estimation (\dfsp).} We estimate human preference probabilities by correcting the
         judge's win probability. The correction is estimated locally in the space of judge
@@ -57,3 +57,5 @@ predictor. The project has three parts.
   \item \textbf{Post-training.} We use the estimated probabilities as targets for DPO-style
         training, and bound the trained model's preference risk by the estimation error.
 \end{enumerate}
+
+\input{sections/fig_overview}

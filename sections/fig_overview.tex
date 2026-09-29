@@ -1,0 +1,38 @@
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  node distance=5mm and 3.2mm,
+  box/.style={draw, rounded corners=2pt, align=center, font=\footnotesize,
+              minimum height=14mm, text width=23mm, inner sep=1.5pt},
+  judge/.style={box, fill=MidnightBlue!8},
+  human/.style={box, fill=BurntOrange!12},
+  est/.style={box, fill=OliveGreen!12},
+  arr/.style={-{Stealth[length=2mm]}, thick}
+]
+  % main row: judge side, estimation, post-training
+  \node[box]                         (data)  {Comparisons\\ \mbox{$(x,y_A,y_B)$}\\ $N$ pairs};
+  \node[judge, right=of data]        (judge) {LLM judge\\ 5 labels,\\ both orders};
+  \node[judge, right=of judge]       (feat)  {Judge features\\ \mbox{$Z=(p_J,t_J,o_J)$}};
+  \node[est,   right=of feat]        (dfsp)  {\dfsp\\ \mbox{$\hat p=p_J+\hat\delta$}\\ (Sec.~\ref{sec:dfsp})};
+  \node[est,   right=of dfsp]        (dpo)   {Soft-label DPO\\ with targets $\hat p$\\ (Sec.~\ref{sec:post-training})};
+  \node[box,   right=of dpo]         (model) {Post-trained\\ model};
+
+  % human-label branch above
+  \node[human, above=8mm of feat]    (sel)   {Label selection\\ (Sec.~\ref{sec:selection})};
+  \node[human, above=8mm of dfsp]    (hum)   {Human labels\\ on \mbox{$n\ll N$} pairs};
+
+  \draw[arr] (data)  -- (judge);
+  \draw[arr] (judge) -- (feat);
+  \draw[arr] (feat)  -- (dfsp);
+  \draw[arr] (dfsp)  -- (dpo);
+  \draw[arr] (dpo)   -- (model);
+  \draw[arr] (feat)  -- (sel);
+  \draw[arr] (sel)   -- (hum);
+  \draw[arr] (hum)   -- (dfsp);
+\end{tikzpicture}
+\caption{Overview. The judge is run on all $N$ comparisons, and its output is summarized by the
+features $Z$. Human labels are collected on $n$ comparisons chosen by the selection rule.
+\dfsp{} corrects the judge's win probability using these labels, and the corrected probabilities
+$\hat p$ are the training targets for the model.}
+\label{fig:overview}
+\end{figure}
