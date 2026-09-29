@@ -1,0 +1,109 @@
+\section{Method III: From personalization to post-training (\fsppo)}
+\label{sec:post-training}
+
+The paper does not stop at $\widehat Q_H$. We update the weights of an open-weight language model.
+Let $\pi_{\mathrm{ref}}$ be the initial policy and $\pi_\vartheta$ the policy being trained. (We write
+$\vartheta$ for policy parameters to avoid a clash with the smoothing parameter $\theta$.) For a
+comparison $X$, the DPO implicit utility difference \citep{rafailov2023dpo} is
+\[
+  d_\vartheta(X)=\beta\Bigl[\log\frac{\pi_\vartheta(y_A\mid x)}{\pi_{\mathrm{ref}}(y_A\mid x)}
+  -\log\frac{\pi_\vartheta(y_B\mid x)}{\pi_{\mathrm{ref}}(y_B\mid x)}\Bigr].
+\]
+
+\paragraph{Binary human labels.}
+With $\hat p_{H,i}=\hmu(Z_i)$ from \dfsp{}, the soft-label objective is
+\[
+  \widehat R(\vartheta;\hat p_H)=\frac1N\sum_{i=1}^{N}\ell\bigl(d_\vartheta(X_i);\hat p_{H,i}\bigr),\qquad
+  \ell(d;p)=-p\log\sigma(d)-(1-p)\log\sigma(-d).
+\]
+This loss is deliberately standard; soft-label DPO and GAPO already use soft targets
+\citep{lee2024rlaif,furuta2024gapo}. The contribution is where $\hat p_H$ comes from and what
+guarantee it carries. The \dfsp{} targets can equally be plugged into GAPO's objective, and we test
+both.
+
+\paragraph{Ordinal or richer labels.}
+With a cumulative-link model \citep{mccullagh1980regression},
+$P_\vartheta(S=s\mid X)=G(\tau_{s+1}-d_\vartheta)-G(\tau_s-d_\vartheta)$, we minimize
+$-\sum_i\sum_s\widehat Q_H(s\mid X_i)\log P_\vartheta(S=s\mid X_i)$. Ordinal and strength-aware
+preference optimization already exist \citep{imai2026mixdpo}; what is new is the personalized
+target.
+
+\subsection{Bridge: personalization error controls post-training excess risk}
+
+Let $R(\vartheta;p)=\E_X\,\ell(d_\vartheta(X);p(X))$ be the population preference risk under target
+$p$, and let $p_X=P(Y=1\mid X)$ be the human target.
+
+\begin{proposition}[General bridge]
+\label{prop:bridge}
+Assume $\sup_\vartheta\sup_X|d_\vartheta(X)|\le D$. Let $\hat p$ be fixed (for example, cross-fitted
+on labels independent of the policy-optimization sample). Let $\hat\vartheta$ satisfy
+$R(\hat\vartheta;\hat p)\le\inf_\vartheta R(\vartheta;\hat p)+\varepsilon$, where $\varepsilon$
+collects generalization error over the $N$ pairs and optimization error. Then
+\[
+  R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\;\le\;\varepsilon+2D\,\E|\hat p(X)-p_X|
+  \;\le\;\varepsilon+2D\,R_X(\hat p)^{1/2}.
+\]
+\end{proposition}
+
+\begin{proof}
+Since $\log\sigma(d)-\log\sigma(-d)=d$, the loss is \emph{linear in the target}:
+$\ell(d;p)-\ell(d;p')=-(p-p')\,d$. Hence $|R(\vartheta;\hat p)-R(\vartheta;p_X)|\le D\,\E|\hat p-p_X|$
+for every $\vartheta$. For any $\vartheta'$, write
+$R(\hat\vartheta;p_X)-R(\vartheta';p_X)$ as
+$[R(\hat\vartheta;p_X)-R(\hat\vartheta;\hat p)]+[R(\hat\vartheta;\hat p)-R(\vartheta';\hat p)]
++[R(\vartheta';\hat p)-R(\vartheta';p_X)]$. Bound the first and third brackets as above and the second
+by $\varepsilon$, then take the infimum over $\vartheta'$. The last step is Cauchy--Schwarz.
+\end{proof}
+
+The same argument covers any cross-entropy objective, including the ordinal one. The difference
+$-\sum_s\{\hat q(s)-q^{*}(s)\}\log P_\vartheta(s\mid X)$ is at most
+$\tfrac12\norm{\hat q-q^{*}}_1\cdot\operatorname{osc}_s\log P_\vartheta(s\mid X)$, and the oscillation is
+bounded when $d_\vartheta$ is bounded and the thresholds are fixed and separated.
+
+\begin{proposition}[Fast rate in the realizable case]
+\label{prop:bridge-fast}
+Suppose $p_X$ and $\hat p$ take values in $[\kappa,1-\kappa]$. For $\hat p$ this can be enforced by
+projecting onto $[\kappa,1-\kappa]$, which by Lemma~\ref{lem:estimator}(ii) does not increase the
+error. Suppose also that for every such $p$ there is a $\vartheta$ with $\sigma(d_\vartheta)=p$
+$P_X$-almost surely. If $\hat\vartheta$ minimizes $R(\cdot;\hat p)$ exactly, then
+\[
+  R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)=\E\,\KL\bigl(\Ber(p_X)\,\|\,\Ber(\hat p)\bigr)
+  \;\le\;\frac{R_X(\hat p)}{\kappa(1-\kappa)} .
+\]
+\end{proposition}
+
+\begin{proof}
+Pointwise, $\ell(d;p)-H(p)=\KL(\Ber(p)\,\|\,\Ber(\sigma(d)))$, where $H$ is the binary entropy. So
+$\sigma(d_{\hat\vartheta})=\hat p$ almost surely and $\inf_\vartheta R(\vartheta;p_X)=\E H(p_X)$.
+Finally, $\KL\le\chi^2=(p_X-\hat p)^2/\{\hat p(1-\hat p)\}$.
+\end{proof}
+
+\keybox{\textbf{Chain.} $n$ human labels
+$\xrightarrow{\ \text{Targets \ref{tr:upper}, \ref{tr:oracle}}\ }$
+$R_X(\hat p)\lesssim r_n+\text{coarsening gap}$
+$\xrightarrow{\ \text{Props.\ \ref{prop:bridge}, \ref{prop:bridge-fast}}\ }$
+excess preference risk $\lesssim r_n^{1/2}$ (misspecified) or $r_n$ (realizable), $+\,\varepsilon_{\mathrm{gen}}(N)+\varepsilon_{\mathrm{opt}}$.}
+
+\begin{target}[Bridge under partial misspecification]
+\label{tr:bridge}
+Under a curvature (margin-type) condition with exponent $\alpha\in[0,1]$ on the policy class,
+\[
+  R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\lesssim\varepsilon+R_X(\hat p)^{(1+\alpha)/2}.
+\]
+This interpolates between Proposition~\ref{prop:bridge} ($\alpha=0$) and
+Proposition~\ref{prop:bridge-fast} ($\alpha=1$). In the realizable case the rate should also be
+unimprovable. Every policy induces an estimator $\sigma(d_\vartheta)$ of $p_X$, and Pinsker's
+inequality gives excess risk $\ge 2\,\E\{\sigma(d_{\hat\vartheta})-p_X\}^2$. The estimation lower
+bound (Target result~\ref{tr:lower}) therefore transfers.
+\end{target}
+
+\paragraph{Scope of the bridge.}
+The bound controls the excess preference log-loss of the policy's implicit preference model against
+the human target. It does not control generation quality directly. The boundedness of $d_\vartheta$
+is an assumption; in practice it is enforced by clipping log-ratios. Section~\ref{sec:experiments}
+therefore also measures generation quality.
+
+\keybox{\textbf{\textcolor{BrickRed}{Design decision D2: data reuse.}} (a) Cross-fit: split the pool
+into two folds, fit \dfsp{} on one fold's revealed labels, and produce targets on the other.
+(b) On the $n$ revealed comparisons, use $\hat p$ (lower variance), the observed $Y$ (unbiased), or
+a mixture. The default is (a) with $\hat p$ everywhere; (b) is an ablation.}

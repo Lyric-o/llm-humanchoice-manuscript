@@ -1,0 +1,158 @@
+\section{Statistical theory}
+\label{sec:theory}
+
+\subsection{Risks and what held-out labels can measure}
+
+Two risks are relevant. The first is measured against the estimand; the second against the
+per-comparison target $\mu_X:=\E\{\phi(Y)\mid X\}$:
+\[
+  R(\hmu)=\E\norm{\hmu(Z)-\muH(Z)}^2,\qquad
+  R_X(\hmu)=\E\norm{\hmu(Z)-\mu_X}^2=R(\hmu)+\E\norm{\muH(Z)-\mu_X}^2 .
+\]
+The expectation is over $Z\sim P_Z$ and the training sample. The equality holds because
+$\E\{\mu_X-\muH(Z)\mid Z\}=0$. With the embeddings of Section~\ref{sec:setup}, $R$ is the Brier/MSE
+risk for binary labels, the ranked probability score (a discrete CRPS) for ordinal labels, and a
+conditional MMD$^2$ for kernel embeddings \citep{gneiting2007strictly,muandet2017kernel}.
+\citet{li2026personalizing} integrate against Lebesgue measure on $[0,1]^d$. With $P_Z$ bounded above
+and below, the two risks are equivalent up to constants.
+
+\begin{lemma}[Single held-out labels suffice for comparisons]
+\label{lem:heldout}
+For a test comparison independent of the training data,
+$\E\norm{\phi(Y)-\hmu(Z)}^2=R_X(\hmu)+\E\tr\Cov\{\phi(Y)\mid X\}$.
+\end{lemma}
+
+\begin{proof}
+Write $\phi(Y)-\hmu=\{\phi(Y)-\mu_X\}+\{\mu_X-\hmu\}$. Conditional on $X$ and the training data, the
+cross term has mean zero.
+\end{proof}
+
+The last term does not depend on the method. Differences in held-out Brier score or RPS between two
+methods are therefore unbiased for differences in $R_X$, even with one human label per comparison.
+Metrics that need $\mu_X$ itself, such as per-item distributional calibration, require
+multi-annotator comparisons.
+
+\subsection{When does the full judge distribution help?}
+\label{sec:scalar-vs-dist}
+
+\begin{proposition}[Scalar versus distributional localization]
+\label{prop:scalar-vs-dist}
+Let $Z_s=\zeta_s(X)$ and $Z_d=\zeta_d(X)$, with $Z_s$ a measurable function of $Z_d$. For example,
+$Z_s=p_J$ and $Z_d=(p_J,\text{further features of }\QJ)$. Let $\mu_s^{*},\mu_d^{*}$ be the
+corresponding estimands, and $\hmu_s,\hmu_d$ estimators fitted on data independent of the evaluation
+point. Then
+\[
+  R_X(\hmu_s)-R_X(\hmu_d) \;=\; G \;-\;\bigl\{R(\hmu_d)-R(\hmu_s)\bigr\},
+  \qquad G=\E\norm{\mu_d^{*}(Z_d)-\mu_s^{*}(Z_s)}^2\ \ge 0,
+\]
+where each $R(\cdot)$ is measured against its own estimand. Moreover, $G=0$ if and only if
+$\E\{\phi(Y)\mid Z_d\}=\E\{\phi(Y)\mid Z_s\}$ almost surely.
+\end{proposition}
+
+\begin{proof}
+From the display above, $R_X(\hmu_\bullet)=R(\hmu_\bullet)+\E\norm{\mu_\bullet^{*}(Z_\bullet)-\mu_X}^2$.
+The $\sigma$-fields are nested, so $\mu_s^{*}(Z_s)=\E\{\mu_d^{*}(Z_d)\mid Z_s\}$. Orthogonality then gives
+$\E\norm{\mu_s^{*}(Z_s)-\mu_X}^2=\E\norm{\mu_d^{*}(Z_d)-\mu_X}^2+G$. Subtract the two expressions.
+\end{proof}
+
+\keybox{\textbf{Reading.} The full judge distribution helps exactly when its information gain $G$
+exceeds the extra estimation cost of localizing in a higher dimension. By Target
+result~\ref{tr:upper}, that cost is of order $n^{-2\gamma_2/(2\gamma_2+d_d)}-n^{-2\gamma_2/(2\gamma_2+d_s)}$.
+$G$ can be estimated from the full labeled pool, so the original scientific question has a direct,
+testable answer (experiment E2).}
+
+\subsection{Finite judge samples}
+\label{sec:judge-budget}
+
+If $\QJ$ is elicited from $M$ stochastic judge calls, we observe a noisy summary $\hat Z_M$ instead of
+$Z_\infty$. The cost of this is controlled as follows.
+
+\begin{proposition}[Judge budget]
+\label{prop:judge-budget}
+Suppose the judge's sampling noise is independent of the comparison and the human label given
+$Z_\infty$, that is, $\hat Z_M\perp(X,Y)\mid Z_\infty$, and that $\E\norm{\hat Z_M-Z_\infty}^2\le C_\psi/M$. Suppose also that $\mu_\infty^{*}(z)=\E\{\phi(Y)\mid Z_\infty=z\}$
+satisfies $\norm{\mu_\infty^{*}(z)-\mu_\infty^{*}(z')}\le\theta_1^{*}\norm{z-z'}^{\theta_2^{*}}$. Then
+the best predictor based on $\hat Z_M$ loses at most
+\[
+  \E\norm{\E\{\phi(Y)\mid\hat Z_M\}-\mu_X}^2-\E\norm{\mu_\infty^{*}(Z_\infty)-\mu_X}^2
+  \;\le\;(\theta_1^{*})^2\,(C_\psi/M)^{\theta_2^{*}} .
+\]
+\end{proposition}
+
+\begin{proof}
+Conditional independence gives $\hat Z_M\perp Y\mid X$, so
+$\E\{\phi(Y)\mid\hat Z_M\}=\E\{\mu_X\mid\hat Z_M\}$. This is the $L^2$ projection of $\mu_X$ onto
+functions of $\hat Z_M$, so its error is at most that of $\mu_\infty^{*}(\hat Z_M)$. Expand
+$\mu_\infty^{*}(\hat Z_M)-\mu_X=\{\mu_\infty^{*}(\hat Z_M)-\mu_\infty^{*}(Z_\infty)\}+\{\mu_\infty^{*}(Z_\infty)-\mu_X\}$.
+The cross term vanishes, because conditional independence gives
+$\E\{\mu_X\mid Z_\infty,\hat Z_M\}=\mu_\infty^{*}(Z_\infty)$. Finally, use the H\"older bound and
+Jensen's inequality:
+$\E\norm{\hat Z_M-Z_\infty}^{2\theta_2^{*}}\le(C_\psi/M)^{\theta_2^{*}}$.
+\end{proof}
+
+So $M\gtrsim r_n^{-1/\theta_2^{*}}$ judge samples per comparison make the judge noise negligible next
+to an estimation rate $r_n$. This trade-off between judge budget $NM$ and human budget $n$ is new
+relative to \citet{li2026personalizing}, whose $f^{(\mathrm{ptr})}$ is evaluated exactly.
+
+\subsection{Target results: rates, lower bound, adaptation}
+
+\begin{assumption}[Regularity; analogue of Conditions 1--2 in \citealp{li2026personalizing}]
+\label{ass:reg}
+$\cZ=[0,1]^d$.
+(a) $\norm{\muH(z)-\muH(z')}_{\cH}\le\theta_1^{*}\norm{z-z'}^{\theta_2^{*}}$ with $0<\theta_2^{*}\le1$.
+(b) $\norm{\phi}\le1$, so $\phi(Y)-\muH(Z)$ is bounded; write
+$\sigma^2(z)=\E\{\norm{\phi(Y)-\muH(z)}^2\mid Z=z\}\le\sigma_{\max}^2$, with $\sigma(\cdot)$ H\"older.
+For binary labels, $\sigma^2=p_H^{*}(1-p_H^{*})$.
+(c) Revealed points follow a design density $p_Z$ on $\cZ$.
+\end{assumption}
+
+For a fixed smoothing parameter $\theta$, let $\mathcal F_\theta(\theta^{*},\gamma,\sigma_0)$ be the set
+of laws satisfying Assumption~\ref{ass:reg}, with $|\cZ|^{-1}\int\sigma\le\sigma_0$ and
+$\delta_{\theta,z}\in\mathcal L_z(\gamma)$ for every $z$. Here $\delta\in\mathcal L_z(\gamma)$ means
+$\sup_{z'}\norm{\delta(z')-\delta(z)}/\norm{z'-z}^{\gamma_2}\le\gamma_1$. Write $\bar\sigma=|\cZ|^{-1}\int\sigma$.
+
+\begin{target}[Upper bound, fixed $\theta$]
+\label{tr:upper}
+Under Assumption~\ref{ass:reg} and the retrieval scheme of Section~\ref{sec:acquisition}, with
+$h\asymp\min\{(\bar\sigma/\gamma_1)^{2/(2\gamma_2+d)}n^{-1/(2\gamma_2+d)},1\}$ and $\gamma=\gamma(\theta)$,
+\[
+  R(\hmu_{\theta,h})\;\lesssim\;\gamma_1^{\frac{2d}{2\gamma_2+d}}\,\bar\sigma^{\frac{4\gamma_2}{2\gamma_2+d}}\,
+  n^{-\frac{2\gamma_2}{2\gamma_2+d}}\;+\;\frac{\bar\sigma^2}{n}.
+\]
+\end{target}
+
+\begin{target}[Minimax lower bound]
+\label{tr:lower}
+For $0\le\theta_1\le C\theta_1^{*}$ and $\theta_2\ge\theta_2^{*}$, the infimum over designs $p_Z$ and
+over estimators with access to $\mJ$ of $\sup_{\mathcal F_\theta(\theta^{*},\gamma,\sigma_0)}R(\hmu)$
+is bounded below by the same expression, with $\bar\sigma$ replaced by $\sigma_0$.
+\end{target}
+
+\begin{target}[Adaptation and no harm]
+\label{tr:oracle}
+$R(\hmu_{\hat\theta,\hat h})\le C_1\min_{(\theta,h)\in\Theta\times\mathbb H}R(\hmu_{\theta,h})
++C_2\sigma_{\max}^2(\log n)^2/n$. Because $\theta_1=0$ lies in $\Theta$, \dfsp{} is never worse than the
+human-only kernel estimator, up to constants and the remainder term: \emph{use the judge when it
+helps, fall back to humans when it does not.}
+\end{target}
+
+\paragraph{When is the judge helpful?}
+As in Examples~1--2 of \citet{li2026personalizing}, borrowing helps when the discrepancy has a
+smaller H\"older constant than the target ($\gamma_1(\theta)\ll\theta_1^{*}$; for example, a nearly
+calibrated judge) or a higher smoothness order ($\gamma_2(\theta)>\theta_2^{*}$; the judge captures
+the rough part of human preference).
+
+\begin{remark}[Which theory is routine and which is new]
+\label{rem:novelty-theory}
+For a finite number of categories $K$, Target results~\ref{tr:upper}--\ref{tr:oracle} should follow
+from the scalar arguments coordinate by coordinate. Bias and variance add over coordinates, and the
+scalar lower-bound construction embeds in a single coordinate. Reviewers will see this. The
+distinctive theory must come from:
+(a) the two-channel identification result, Proposition~\ref{prop:scalar-vs-dist}, and its test;
+(b) the judge-budget trade-off, Proposition~\ref{prop:judge-budget}, together with the joint
+allocation of $(M,n)$;
+(c) the kernel-embedding case with growing $K$, whose rates depend on an effective dimension;
+(d) pool-based design with finite $N$ (Algorithm~4 of \citealp{li2026personalizing} assumes a
+log-linear density ratio);
+(e) the bridge to post-training (Section~\ref{sec:post-training}).
+\end{remark}

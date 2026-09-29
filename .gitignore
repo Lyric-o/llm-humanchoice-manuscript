@@ -1,0 +1,26 @@
+# LaTeX build artifacts (Overleaf compiles its own PDF)
+*.aux
+*.bbl
+*.blg
+*.brf
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.nav
+*.out
+*.snm
+*.synctex.gz
+*.synctex(busy)
+*.toc
+*.vrb
+*.xdv
+/main.pdf
+/build/
+
+# Editors / OS
+.DS_Store
+*.swp
+*~
+.vscode/

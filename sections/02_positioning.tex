@@ -1,0 +1,75 @@
+\section{Positioning: what exists and the claimed gap}
+\label{sec:positioning}
+
+Most ingredients of this pipeline already exist in isolation, so the contribution cannot rest on
+``soft preferences'', ``distributional DPO'', ``few human labels'' or ``LLM-judge calibration''.
+Table~\ref{tab:positioning} lists the closest work.
+
+\begin{table}[h]
+\centering
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\linewidth}{@{}p{3.1cm}XX@{}}
+\toprule
+Work & What it establishes & What it leaves open for us \\
+\midrule
+RLAIF \newline \citep{lee2024rlaif} &
+AI preference \emph{distributions} from normalized token log-probabilities (e.g.\ $[0.6,0.4]$);
+reward model trained by cross-entropy on these soft labels. &
+No few-shot correction toward humans; no guarantees. \\
+GAPO \newline \citep{furuta2024gapo} &
+DPO-style optimization for soft preference labels via a weighted geometric average of likelihoods. &
+Takes soft labels as given; how accurate they are and where they come from is not modeled. \\
+MixDPO \newline \citep{imai2026mixdpo} &
+Latent distribution of preference \emph{strength} inside DPO. &
+Heterogeneity of strength, not a judge-to-human correction. \\
+DPRM \newline \citep{li2024dprm} &
+Population preferences as a categorical distribution; OT-based reward model; policy fine-tuning. &
+Not a few-shot correction of an AI judge; no rate theory. \\
+RLTHF \newline \citep{xu2025rlthf} &
+Targeted human corrections of AI-mislabeled samples; matches full human annotation with
+6--7\% of the effort. &
+Label-level correction; no distributional target, no rates. \\
+\citet{vandenburg2025aligning} &
+Linear map from black-box LLM outputs to human judgments, zero- and few-shot. &
+Parametric; no minimax theory; no post-training. \\
+\citet{shen2025active} &
+Fisher-information selection of pairs for human annotation in reward modeling. &
+Design is not tied to a judge-to-human discrepancy. \\
+DIAL \newline \citep{cai2026dial} &
+Joint BTL likelihood of abundant LLM and scarce human comparisons, weight $\lambda$ ($\lambda=0$ is
+human-only) tuned by GACV; asymptotic normality. &
+Binary verdicts; item-level BTL scores, not per-comparison distributions; parametric;
+no post-training. \\
+\citet{galatolo2026lowresource} &
+Linear probe on $\le 500$ human-labeled pairs annotates $50$K$+$ pairs for preference optimization. &
+No judge distribution; empirical. \\
+\citet{li2026personalizing} &
+Black-box FSP: local smoothing, adaptive borrowing, sampling design, minimax and no-harm. &
+Scalar regression; no distributional output; no post-training. \\
+\bottomrule
+\end{tabularx}
+\caption{Closest prior work (checked 28 September 2026).}
+\label{tab:positioning}
+\end{table}
+
+Two recent works are also relevant to individual components. \citet{li2026calibrate} calibrates
+full panels of noisy judges with proper scoring rules; this is a natural calibration baseline for
+Method~I. \citet{lail2026decomposing} targets expert labels using the epistemic part of judge
+uncertainty; this is a baseline for Method~II.
+
+\keybox{\textbf{Claimed gap.} Few-shot personalization of a \emph{distribution-valued} black-box
+judge, with minimax and adaptive (no-harm) guarantees, followed by policy optimization whose excess
+risk is explicitly controlled by the personalization error.}
+
+We did not find prior work that establishes this complete chain. We treat it as a
+\emph{novelty hypothesis} that must be re-checked before submission. DIAL \citep{cai2026dial},
+posted three days before this draft, is the closest on adaptive borrowing and should be
+tracked.
+
+\paragraph{Claims we do not make.}
+The soft-label preference loss is not new \citep{lee2024rlaif,furuta2024gapo}. Neither is ordinal or
+strength-aware preference optimization \citep{imai2026mixdpo}, active selection of pairs for human
+labeling \citep{shen2025active,xu2025rlthf}, or mapping judge outputs to human labels
+\citep{vandenburg2025aligning}. Our contribution is where the preference target comes from and what
+guarantees it carries through to the policy.

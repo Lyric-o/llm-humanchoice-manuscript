@@ -1,0 +1,118 @@
+\documentclass[11pt]{article}
+
+% ---------------------------------------------------------------------------
+% Packages (kept to a set that compiles on Overleaf and on TeX Live 2020)
+% ---------------------------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{microtype}
+\usepackage[round,authoryear]{natbib}
+\usepackage[colorlinks=true,linkcolor=MidnightBlue,citecolor=MidnightBlue,urlcolor=MidnightBlue]{hyperref}
+
+\setlist{itemsep=2pt,topsep=4pt}
+
+% ---------------------------------------------------------------------------
+% Theorem-like environments
+%   Proposition / Lemma : proved in this draft (short proofs included)
+%   Target result       : statement we aim to establish; not yet proved
+% ---------------------------------------------------------------------------
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{target}{Target result}
+\renewcommand{\thetarget}{\Alph{target}}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+% ---------------------------------------------------------------------------
+% Macros
+% ---------------------------------------------------------------------------
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cM}{\mathcal{M}}
+\newcommand{\cZ}{\mathcal{Z}}
+\newcommand{\cS}{\mathcal{S}}
+\newcommand{\cI}{\mathcal{I}}
+\newcommand{\cD}{\mathcal{D}}
+\newcommand{\QJ}{Q_J}
+\newcommand{\QH}{Q_H}
+\newcommand{\muH}{\mu_H^{*}}
+\newcommand{\mJ}{m_J}
+\newcommand{\hmu}{\widehat\mu}
+\newcommand{\Dhat}{\widehat\Delta}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\norm}[1]{\lVert #1 \rVert}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator{\Ber}{Bernoulli}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\Cov}{Cov}
+\newcommand{\dfsp}{D-FSP}
+\newcommand{\sfsp}{S-FSP}
+\newcommand{\fsppo}{FSP-PO}
+\newcommand{\todo}[1]{\textcolor{BrickRed}{[\textbf{TODO:} #1]}}
+
+\definecolor{boxbg}{RGB}{242,246,252}
+\definecolor{boxrule}{RGB}{60,90,150}
+\newcommand{\keybox}[1]{\par\medskip\noindent\fcolorbox{boxrule}{boxbg}{%
+  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{#1}}\par\medskip}
+
+% ---------------------------------------------------------------------------
+\title{Distributional Few-Shot Personalization\\for Human-Anchored LLM Post-Training\\[6pt]
+\large Research proposal --- draft v0.1}
+\author{LLM-humanchoice project}
+\date{28 September 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+LLM judges are cheap, and under repeated sampling, logit elicitation or a structured rating
+protocol they produce a \emph{distribution} over preference outcomes rather than a single winner.
+That distribution is not the human preference distribution that post-training should target, and
+human labels are scarce. We propose to treat the judge as a distribution-valued black-box predictor
+and to \emph{personalize} it to humans with a few labels, extending the few-shot personalization
+(FSP) framework of \citet{li2026personalizing} from scalar nonparametric regression to conditional
+preference distributions. The proposal has three linked components: (I) a distributional FSP
+estimator (\dfsp) that corrects the judge through a locally smoothed discrepancy and contains the
+human-only estimator as a special case; (II) a label-acquisition rule derived from the estimator's
+integrated risk; and (III) post-training of an open-weight policy against the personalized target
+(\fsppo), with a bound that propagates the personalization error into the policy's excess
+preference risk. Two short results are already proved here: an exact decomposition that says when
+the full judge distribution beats its scalar summary, and an error-propagation bound from
+personalization to post-training. The minimax, adaptation and design results are stated as
+targets. All experiments are retrospective on an existing human-labeled dataset: a small fraction
+of labels is revealed and the rest are held out.
+\end{abstract}
+
+\noindent\textbf{Reading guide.} \emph{Propositions} and \emph{Lemmas} are proved in this draft.
+\emph{Target results} are statements we intend to establish; they are not yet proved.
+\textcolor{BrickRed}{Red} markers are open decisions.
+
+\tableofcontents
+\newpage
+
+\input{sections/01_motivation}
+\input{sections/02_positioning}
+\input{sections/03_setup}
+\input{sections/04_dfsp}
+\input{sections/05_theory}
+\input{sections/06_acquisition}
+\input{sections/07_post_training}
+\input{sections/08_experiments}
+\input{sections/09_risks}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

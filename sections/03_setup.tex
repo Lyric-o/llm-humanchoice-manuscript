@@ -1,0 +1,69 @@
+\section{Setup and notation}
+\label{sec:setup}
+
+\paragraph{Data.}
+A pool of comparisons $X_1,\dots,X_N$, with $X_i=(x_i,y_{A,i},y_{B,i})$, is drawn from $P_X$. A frozen
+judge is queried on every comparison, giving $\QJ(\cdot\mid X_i)$ for all $i\le N$. The dataset
+supplied for this project already contains a human label $Y_i$ for every comparison. During
+training, only the labels indexed by $\cI_n\subset[N]$, $|\cI_n|=n\ll N$, are revealed; the others are
+held out for evaluation. \textbf{No new human annotation is collected.}
+
+\paragraph{Human outcome and its embedding.}
+Let $\cS_H$ be the human outcome space and $\QH^{*}(\cdot\mid X)$ the target conditional distribution.
+We represent distributions through a feature map $\phi:\cS_H\to\cH$ and write $\cM$ for the closed
+convex hull of $\phi(\cS_H)$. The conditional mean embedding $\E\{\phi(Y)\mid\cdot\}$ then always
+lies in $\cM$.
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Human label & $\phi(y)$ & $\E\{\phi(Y)\mid\cdot\}$ & $\norm{\cdot}^2$ risk \\
+\midrule
+Binary $\{0,1\}$ & $y$ & $p_H^{*}$ & Brier / MSE \\
+Categorical $\{1..K\}$ & one-hot $e_y$ & probability vector & multiclass Brier \\
+Ordinal $\{1..K\}$ & $(\ind\{y\le k\})_{k<K}$ & CDF vector & RPS (discrete CRPS) \\
+General & kernel feature & conditional mean embedding & conditional MMD$^2$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent For the kernel row see \citet{song2009hilbert,muandet2017kernel}. If $r$ annotators label a
+comparison, their averaged embedding is an unbiased label whose noise variance is divided by $r$.
+
+\paragraph{Judge-side objects.}
+The judge's support $\cS_J$ may differ from $\cS_H$. For example, the judge may give a five-point graded
+preference while the human label is binary. A known \emph{link} $T$ maps judge distributions into $\cM$
+and defines the judge's prediction
+\[
+  \mJ(X) \;=\; T\{\QJ(\cdot\mid X)\}\in\cM .
+\]
+If $\cS_J=\cS_H$, then $T(Q)=\E_{Z\sim Q}\phi(Z)$. For a graded judge and a binary human label, one
+choice is $T(Q)=Q(A\gg B)+Q(A>B)+\tfrac12 Q(\text{tie})$. Position bias is handled by averaging the
+judge over both presentation orders.
+
+\paragraph{Localization variable.}
+Kernel smoothing needs a low-dimensional covariate, and the raw text $X$ is not one. We localize in
+\[
+  Z=\zeta(X)=\bigl(\psi\{\QJ(\cdot\mid X)\},\,\xi(X)\bigr)\in\cZ\subset\R^{d}.
+\]
+Here $\psi$ is a low-dimensional summary of the judge distribution, for example the judge
+probability $p_J$, tie mass, entropy, or dispersion across repeated samples. $\xi$ holds optional
+coarse content features, such as task category, length difference, or a low-dimensional projection
+of an embedding. We require $\mJ(X)$ to be a function of $Z$; this holds whenever $\psi$ determines
+$T(\QJ)$. We then write $\mJ(z)$.
+
+\paragraph{Estimand.}
+\[
+  \muH(z)=\E\{\phi(Y)\mid Z=z\}\in\cM .
+\]
+For binary labels, $\muH=p_H^{*}$. The estimand depends on $\zeta$: it is the per-comparison target
+$\E\{\phi(Y)\mid X\}$ coarsened to $Z$. Section~\ref{sec:scalar-vs-dist} shows that this coarsening is
+exactly where the full judge distribution can matter.
+
+\keybox{\textbf{\textcolor{BrickRed}{Design decision D1: the localization variable $\zeta$.}}
+Options: (a) $Z=\psi(\QJ)$ only, which is low-dimensional and lets the theory transfer directly;
+(b) $\psi(\QJ)$ plus a few content features; (c) a high-dimensional embedding, which suffers from the
+curse of dimensionality and would need an intrinsic-dimension analysis. The default is (a) or (b)
+with $d\le 4$.}

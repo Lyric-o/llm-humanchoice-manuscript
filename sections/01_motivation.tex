@@ -1,0 +1,45 @@
+\section{Motivation and problem statement}
+\label{sec:motivation}
+
+Large language models are increasingly used as inexpensive judges for preference annotation and
+post-training \citep{bai2022constitutional,zheng2023judging,lee2024rlaif}. A judge need not return
+only a deterministic winner. Under repeated sampling, logit-based elicitation or a structured rating
+protocol it induces a conditional distribution
+\[
+  \QJ(\cdot\mid X), \qquad X=(x,y_A,y_B),
+\]
+over preference outcomes for a prompt $x$ and two candidate responses $y_A,y_B$.
+
+$\QJ$ is not the human preference distribution $\QH^{*}$ that post-training should target, and
+human annotations cost far more than judge queries. The realistic regime is therefore AI feedback
+on a large pool of comparisons and human labels on only a small subset:
+
+\keybox{\centering
+abundant probabilistic AI feedback $+$ few human labels
+$\;\longrightarrow\;$ human-target preference distribution
+$\;\longrightarrow\;$ post-trained language model.}
+
+\paragraph{Statistical template.}
+\citet{li2026personalizing} study few-shot personalization of a black-box predictor in nonparametric
+regression. Given a pretrained function $f^{(\mathrm{ptr})}$ and a small labeled sample from the
+target model $y=f^{*}(x)+\varepsilon$, their procedure has three steps. It first applies a
+deterministic $\theta$-local-smoothing to $f^{(\mathrm{ptr})}$. It then estimates the target-minus-source
+discrepancy with a kernel smoother. Finally it selects $\theta$ on validation data; the grid includes
+$\theta_1=0$, which recovers the target-only estimator. A variance-driven sample-retrieval rule
+decides where to collect labels. They prove a minimax rate that improves on target-only estimation
+when the discrepancy is smoother, or has a smaller H\"older constant, than $f^{*}$ itself. They also
+prove a no-harm property when $f^{(\mathrm{ptr})}$ is uninformative. Their setting is scalar
+regression on $[0,1]^d$; it does not involve distributions as outputs or preference learning.
+
+\paragraph{This proposal.}
+We (i) extend FSP from a scalar black-box predictor to a \emph{distribution-valued} black-box judge,
+and (ii) connect the resulting estimator to actual post-training, with the personalization error
+entering the policy's excess risk explicitly. The research questions are:
+\begin{description}[leftmargin=1.2cm,style=nextline]
+  \item[RQ1] \emph{Estimation.} When, and by how much, does a distribution-valued judge reduce the
+  number of human labels needed to estimate the human preference distribution? Does the full judge
+  distribution carry information beyond its point prediction?
+  \item[RQ2] \emph{Design.} Which comparisons should the limited human budget be spent on?
+  \item[RQ3] \emph{Post-training.} How does personalization error propagate into the excess risk of
+  the post-trained policy, and does the statistical gain survive in real checkpoints?
+\end{description}

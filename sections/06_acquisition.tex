@@ -1,0 +1,67 @@
+\section{Method II: Distribution-aware human-label acquisition}
+\label{sec:acquisition}
+
+In our retrospective experiments we choose which existing labels to reveal. Revealing a label
+simulates annotating that comparison, so design can be studied without recruiting annotators. This
+is the pool-based setting of Algorithm~4 in \citet{li2026personalizing}: the pool $\{Z_i\}_{i\le N}$ is
+fully observed, and we choose $n$ points to label.
+
+\subsection{What the FSP risk says about design}
+
+With a global bandwidth, the design density enters the risk of \citet{li2026personalizing} only
+through the variance term $\int\sigma^2(z)/p_Z(z)\,dz$. The optimal design is therefore
+$p_Z^{*}\propto\sigma$. For binary labels $\sigma^2=p_H^{*}(1-p_H^{*})$ (their own example), so labels
+should go where \emph{humans} are split. Judge uncertainty is not the criterion.
+
+\paragraph{Adding local discrepancy complexity.}
+With a locally adaptive bandwidth $h(z)$, the pointwise risk is approximately
+$\gamma_1(z)^2h^{2\gamma_2}+\sigma^2(z)/\{np_Z(z)h^d\}$. Here $\gamma_1(z)$ is the local H\"older
+constant of the \emph{discrepancy} near $z$. Optimizing $h$ at each point gives
+$A(z)\{np_Z(z)\}^{-2\gamma_2/(2\gamma_2+d)}$, with
+$A=\gamma_1^{2d/(2\gamma_2+d)}\sigma^{4\gamma_2/(2\gamma_2+d)}$. Minimizing the integral subject to
+$\int p_Z=1$ gives
+\begin{equation}
+  p_Z^{*}(z)\;\propto\;\gamma_1(z)^{\frac{2d}{4\gamma_2+d}}\;\sigma(z)^{\frac{4\gamma_2}{4\gamma_2+d}},
+  \qquad
+  \text{risk}\asymp n^{-\frac{2\gamma_2}{2\gamma_2+d}}
+  \Bigl(\int A^{\frac{2\gamma_2+d}{4\gamma_2+d}}\Bigr)^{\frac{4\gamma_2+d}{2\gamma_2+d}}.
+  \label{eq:design}
+\end{equation}
+As $d\to0$ this recovers the $\sigma$-proportional rule. The rule depends on two factors:
+\emph{human outcome variability} ($\sigma$) and \emph{local complexity of the AI-to-human
+discrepancy} ($\gamma_1$).
+
+\keybox{\textbf{Design principle.} A constant offset between judge and humans is cheap to learn,
+even when it is large. Labels should go where the discrepancy \emph{varies}, not merely where the
+judge disagrees with humans or where the judge is unsure.}
+
+\begin{target}[Adaptive design]
+\label{tr:design}
+A plug-in version of \eqref{eq:design} with pilot estimates $\hat\sigma,\hat\gamma_1$ and a locally
+adaptive (e.g.\ Lepski-type) bandwidth attains the oracle-design risk up to constants and
+logarithmic factors, and does strictly better than uniform design when $A$ is heterogeneous.
+\end{target}
+
+\subsection{Algorithm}
+
+\begin{enumerate}[label=\arabic*.]
+  \item \emph{Pilot.} Reveal $n_0=cn$ labels uniformly at random. As in Algorithm~1 of
+        \citet{li2026personalizing}, half go to pilot estimation and half to validation.
+  \item \emph{Pilot estimates.} Estimate $\hat\sigma^2(z)$, as $\hat p(1-\hat p)$ from a pilot
+        \dfsp{} fit or with their kernel variance estimator. Estimate $\hat\gamma_1(z)$ as the local
+        variation of the kernel-smoothed pilot residuals $\phi(Y)-\mJ(Z)$, floored at $\epsilon>0$.
+  \item \emph{Target design.} Set $\hat p_Z\propto\hat\gamma_1^{2d/(4\gamma_2+d)}\hat\sigma^{4\gamma_2/(4\gamma_2+d)}$,
+        mixed with the uniform design with weight $\eta$ for robustness.
+  \item \emph{Pool sampling.} Draw the remaining $n-n_0$ points from the pool with probabilities
+        proportional to $\hat p_Z(Z_i)/\hat q(Z_i)$, where $\hat q$ is the pool density. The pool is
+        fully observed and $N\gg n$, so $\hat q$ is accurate.
+\end{enumerate}
+The validation set comes from the uniform pilot, so the adaptation step of
+Section~\ref{sec:dfsp} needs no importance weighting.
+
+\paragraph{Baselines.}
+Random reveal; judge uncertainty (entropy of $\QJ$, or $|p_J-\tfrac12|$); disagreement-targeted
+correction in the style of RLTHF \citep{xu2025rlthf}; Fisher-information design \citep{shen2025active};
+epistemic-uncertainty targeting \citep{lail2026decomposing}; and the $\sigma$-proportional rule of
+\citet{li2026personalizing}. Active labeling itself is not claimed as new. The contribution is a
+rule derived from the \emph{distributional personalization risk}.

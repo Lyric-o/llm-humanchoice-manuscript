@@ -1,0 +1,125 @@
+\section{Method I: Distributional Few-Shot Personalization (\dfsp)}
+\label{sec:dfsp}
+
+\subsection{Personalized decomposition}
+
+For a center $z\in\cZ$ and a smoothing parameter $\theta$, we write the human target as a locally
+smoothed judge prediction plus a discrepancy:
+\begin{equation}
+  \muH(z') \;=\; \omega_{\theta,z}\circ\mJ(z') \;+\; \delta_{\theta,z}(z'), \qquad z'\in\cZ .
+  \label{eq:decomp}
+\end{equation}
+At $z'=z$ the smoothing leaves the judge unchanged (Lemma~\ref{lem:smoothing}), so
+$\delta_{\theta,z}(z)=\muH(z)-\mJ(z)$ is the human-versus-AI discrepancy at $z$. The estimator never
+learns $\muH$ from scratch. It asks \emph{how, and by how much, the judge must be corrected to behave
+like humans}. When the judge is close to humans, $\delta_{\theta,z}$ is simpler than $\muH$, and few
+labels suffice.
+
+\subsection{Vector-valued local smoothing}
+
+\begin{definition}[$\theta$-local smoothing in $\cH$]
+\label{def:smoothing}
+Let $\theta=(\theta_1,\theta_2)$ with $\theta_1\in[0,\infty]$ and $\theta_2\in(0,1]$. For
+$g:\cZ\to\cH$ and a center $z\in\cZ$, define
+\[
+  \omega_{\theta,z}\circ g(z') = g(z) + \lambda_{\theta,z}(z')\{g(z')-g(z)\},\qquad
+  \lambda_{\theta,z}(z') = \min\Bigl\{1,\;\frac{\theta_1\norm{z'-z}^{\theta_2}}{\norm{g(z')-g(z)}_{\cH}}\Bigr\},
+\]
+with $\lambda_{\theta,z}(z')=1$ when $g(z')=g(z)$.
+\end{definition}
+
+This radially truncates the variation of $g$ around the center, so the truncated function lies in a
+H\"older ball at $z$. In one dimension it is exactly the operation in equation~(3) of
+\citet{li2026personalizing}.
+
+\begin{lemma}
+\label{lem:smoothing}
+For every $g$, $z$ and $\theta$:
+(i) $\omega_{\theta,z}\circ g(z)=g(z)$;
+(ii) $\norm{\omega_{\theta,z}\circ g(z')-g(z)}_{\cH}\le\theta_1\norm{z'-z}^{\theta_2}$ for all $z'$;
+(iii) if $g$ takes values in a convex set $\cM$, so does $\omega_{\theta,z}\circ g$;
+(iv) if $\norm{g(z')-g(z)}_{\cH}\le\theta_1\norm{z'-z}^{\theta_2}$ for all $z'$, then
+$\omega_{\theta,z}\circ g=g$;
+(v) if $\theta_1=0$, then $\omega_{\theta,z}\circ g\equiv g(z)$;
+(vi) if $\cH=\R$, the definition reduces to
+$g(z)+\min\{|g(z')-g(z)|,\theta_1\norm{z'-z}^{\theta_2}\}\operatorname{sgn}\{g(z')-g(z)\}$.
+\end{lemma}
+
+\begin{proof}
+(i) and (v) are immediate. For (ii), the norm of the correction equals
+$\min\{\norm{g(z')-g(z)},\theta_1\norm{z'-z}^{\theta_2}\}$. For (iii), $\omega_{\theta,z}\circ g(z')$
+lies on the segment between $g(z)$ and $g(z')$ because $\lambda\in[0,1]$. For (iv), the hypothesis
+forces $\lambda\equiv1$. (vi) follows by writing $g(z')-g(z)=|g(z')-g(z)|\operatorname{sgn}\{\cdot\}$.
+\end{proof}
+
+Property~(iii) matters for distributions: smoothing a probability vector or a CDF vector never
+leaves the set of valid distributions.
+
+\subsection{Estimator}
+
+Split the revealed indices into $\cI_{\mathrm{tr}}$ and $\cI_{\mathrm{va}}$, and let
+$K_h(z',z)=\ind\{\norm{z'-z}_\infty\le h\}$, the box kernel used by \citet{li2026personalizing}.
+Define
+\begin{align}
+  \Dhat_{\theta,h}(z) &= \frac{\sum_{i\in\cI_{\mathrm{tr}}}K_h(Z_i,z)\,\{\phi(Y_i)-\omega_{\theta,z}\circ\mJ(Z_i)\}}
+                             {1\vee\sum_{i\in\cI_{\mathrm{tr}}}K_h(Z_i,z)}, \label{eq:delta-hat}\\[2pt]
+  \hmu_{\theta,h}(z)  &= \Pi_{\cM}\bigl\{\mJ(z)+\Dhat_{\theta,h}(z)\bigr\}, \label{eq:mu-hat}
+\end{align}
+where $\Pi_{\cM}$ is the metric projection onto $\cM$. The projection is a clip to $[0,1]$ in the binary
+case, a sort-based projection onto the simplex in the categorical case, and isotonic regression
+followed by clipping to $[0,1]$ in the ordinal (CDF) case.
+
+\begin{lemma}
+\label{lem:estimator}
+(i) If $\theta_1=0$ and the window at $z$ contains a training point, then $\hmu_{\theta,h}(z)$ is the
+average of $\phi(Y_i)$ over that window. This is the human-only kernel estimator, so the judge is
+ignored.
+(ii) Since $\muH(z)\in\cM$ and $\Pi_{\cM}$ is non-expansive,
+$\norm{\hmu_{\theta,h}(z)-\muH(z)}\le\norm{\mJ(z)+\Dhat_{\theta,h}(z)-\muH(z)}$. Projection never
+increases the error, so risk bounds for the unprojected estimator carry over.
+\end{lemma}
+
+\begin{proof}
+(i) By Lemma~\ref{lem:smoothing}(v), every $\omega_{\theta,z}\circ\mJ(Z_i)$ equals $\mJ(z)$, so
+$\Dhat=\bar\phi-\mJ(z)$, where $\bar\phi$ is the window average of $\phi(Y_i)$. Then
+$\mJ(z)+\Dhat=\bar\phi\in\cM$, and the projection has no effect.
+(ii) is the standard property of projection onto a closed convex set.
+\end{proof}
+
+\subsection{Adaptation}
+
+Following \citet{li2026personalizing}, let
+$\Theta=\{0,\tfrac{c}{\log n},\tfrac{2c}{\log n},\dots,c\}\times\{\tfrac{1}{\log n},\dots,1\}$,
+together with a bandwidth grid $\mathbb H$, and choose
+\[
+  (\hat\theta,\hat h)=\argmin_{(\theta,h)\in\Theta\times\mathbb H}\;
+  \sum_{i\in\cI_{\mathrm{va}}}\norm{\phi(Y_i)-\hmu_{\theta,h}(Z_i)}^2 .
+\]
+Because $\theta_1=0$ is in the grid, the candidate family contains the human-only estimator, and a
+poor judge can be switched off by the data (Target result~\ref{tr:oracle}).
+
+\subsection{Two channels through which the judge distribution enters}
+\label{sec:two-channels}
+
+\keybox{\textbf{Offset channel.} The judge prediction $\mJ=T(\QJ)$ is the offset that is corrected.
+It affects only the \emph{complexity} of the discrepancy, and hence estimation error.\\[3pt]
+\textbf{Localization channel.} The summary $\psi(\QJ)$ is part of the smoothing covariate $Z$. It
+determines the \emph{estimand} $\muH(z)=\E\{\phi(Y)\mid Z=z\}$, and hence which human variation is
+identifiable at all.}
+
+\emph{Scalar FSP} (\sfsp) is the special case $\psi(\QJ)=p_J$ with an offset that depends only on
+$p_J$. \emph{Distributional FSP} (\dfsp) uses a richer $\psi$ and, when $\cS_J$ matches $\cS_H$, the
+full-distribution offset $\mJ=\E_{\QJ}\phi$. Section~\ref{sec:scalar-vs-dist} gives an exact
+decomposition of when \dfsp{} beats \sfsp.
+
+\paragraph{Procedure.}
+\begin{enumerate}[label=\arabic*.]
+  \item Query the judge on all $N$ comparisons; compute $Z_i=\zeta(X_i)$ and $\mJ(Z_i)$.
+  \item Choose $\cI_n$, either at random or with Method~II (Section~\ref{sec:acquisition}); reveal
+        $\{Y_i\}_{i\in\cI_n}$ and split them into $\cI_{\mathrm{tr}}$ and $\cI_{\mathrm{va}}$.
+  \item For each $(\theta,h)$, evaluate \eqref{eq:mu-hat} at all pool points.
+  \item Select $(\hat\theta,\hat h)$ on $\cI_{\mathrm{va}}$ and output
+        $\widehat Q_H(\cdot\mid X_i)\leftrightarrow\hmu_{\hat\theta,\hat h}(Z_i)$ for $i\in[N]$.
+\end{enumerate}
+The cost is $N$ judge calls (times $M$ if the judge is elicited by sampling) and $n$ human labels.
+Computation is negligible next to judge inference.

@@ -1,0 +1,114 @@
+\section{Experimental design}
+\label{sec:experiments}
+
+All experiments are retrospective on the human-labeled dataset supplied for this project. No new
+human-subject data are collected.
+
+\subsection{E0: Data, judges, and budgets}
+
+\begin{itemize}
+  \item \textbf{Dataset.} \todo{name, $N$, label structure (binary / ordinal / multi-annotator),
+        availability of prompts and response texts for post-training, license}. The label
+        structure determines the embedding $\phi$ and the metrics
+        (Section~\ref{sec:setup}).
+  \item \textbf{Judges.} J1: an open-weight judge with logit access, whose preference distribution
+        is the normalized token probabilities, as in RLAIF \citep{lee2024rlaif}. J2: a sampled
+        judge with $M$ stochastic calls per comparison, which yields dispersion features and the
+        judge-budget experiment E5. Both presentation orders are always used.
+        \todo{choose judge models}.
+  \item \textbf{Judge summaries $\psi$.} $p_J$; tie mass; entropy; position inconsistency
+        $|p_J^{AB}-(1-p_J^{BA})|$; dispersion across the $M$ samples.
+  \item \textbf{Budgets.} $n/N\in\{1,2,5,10,20\}\%$, adapted to $N$. For the estimation experiments,
+        $50$ independent random reveals per budget, with all hidden labels as the test set.
+\end{itemize}
+
+\subsection{E1: Estimation of the human preference distribution}
+
+\textbf{Methods.} Human-only (kernel on $Z$; logistic regression on $Z$); raw judge $\mJ$; scalar
+recalibration of $p_J$ (Platt, isotonic); the linear map of \citet{vandenburg2025aligning}; panel
+calibration \citep{li2026calibrate} when several judges are available; \sfsp; \dfsp.\\
+\textbf{Metrics.} Held-out Brier score, which equals $R_X$ up to a method-independent constant
+(Lemma~\ref{lem:heldout}); NLL; RPS for ordinal labels; reliability diagrams and ECE; distance to the
+empirical human distribution on multi-annotator items.\\
+\textbf{Headline plot.} Estimation error versus the number of revealed human labels.
+
+\subsection{\texorpdfstring{E2: Does the judge distribution carry information beyond $p_J$?}{E2: Does the judge distribution carry information beyond p\_J?}}
+
+\begin{enumerate}[label=(\alph*)]
+  \item Estimate the information gain $G$ of Proposition~\ref{prop:scalar-vs-dist} on all $N$
+        labels. Fit cross-fitted nonparametric regressions on $Z_s=p_J$ and on $Z_d$, and compare
+        their held-out Brier scores with a paired bootstrap. This tests $G=0$.
+  \item Hold $p_J$ fixed and vary the rest of $\QJ$: within narrow $p_J$ bins, test whether human
+        label rates vary with the other judge features.
+  \item Locate the budget $n$ at which \dfsp{} overtakes \sfsp, and compare it with the prediction
+        from Proposition~\ref{prop:scalar-vs-dist}.
+\end{enumerate}
+
+\subsection{E3: Label acquisition}
+
+Compare random reveal, the baselines of Section~\ref{sec:acquisition}, and rule \eqref{eq:design},
+using error-versus-$n$ curves. As a diagnostic, show the estimated maps $\hat\sigma(z)$ and
+$\hat\gamma_1(z)$ and where labels were placed.
+
+\subsection{E4: Stress tests of the no-harm property}
+
+Corrupt the judge in four ways:
+(a) constant logit shift $b$;
+(b) overconfidence, $\QJ\propto\QJ^{\tau}$ with $\tau>1$;
+(c) region-wise label reversal, swapping $A$ and $B$ within one task category or region of $\cZ$;
+(d) noise mixing, $\QJ\leftarrow(1-\epsilon)\QJ+\epsilon\,\mathrm{Dirichlet}$.\\
+\textbf{Predictions.} (a) and (b) produce smooth discrepancies, so \dfsp{} should keep most of its
+gain. (c) produces a discontinuous discrepancy, so $\hat\theta_1$ should shrink and the risk should
+approach the human-only estimator. In (d), as $\epsilon\to1$ the risk should approach the human-only
+estimator, confirming Target result~\ref{tr:oracle}. We report the path of $\hat\theta$ throughout.
+
+\subsection{E5: Judge budget}
+
+Vary $M\in\{1,2,4,\dots,64\}$ and check the saturation predicted by Proposition~\ref{prop:judge-budget}.
+Report the joint allocation of cost between judge calls $NM$ and human labels $n$.
+
+\subsection{E6: Post-training}
+
+\textbf{Policy.} A small open-weight instruction model trained with LoRA or QLoRA
+\citep{hu2022lora,dettmers2023qlora}. \todo{model, $\beta$, compute budget}. The pipeline is
+\[
+  \pi_0\to\text{judge all pairs}\to\QJ\to\dfsp\text{ with }n\text{ labels}\to\widehat Q_H
+  \to\text{preference optimization}\to\pi_{\mathrm{post}}.
+\]
+$\pi_{\mathrm{post}}$ is a new checkpoint obtained by gradient updates.
+
+\textbf{Arms.} DPO on the $n$ human labels only; hard RLAIF (DPO on the judge's argmax over all
+$N$); soft RLAIF (soft DPO with targets $p_J$); GAPO with targets $p_J$; soft DPO with linear-map
+targets \citep{vandenburg2025aligning}; soft DPO with \sfsp{} targets; \fsppo{} (\dfsp{} targets),
+optionally combined with GAPO; a hybrid with human labels on $\cI_n$ and judge labels elsewhere, in
+the spirit of RLTHF; and, as an upper reference, DPO on all $N$ human labels. Each arm is run at 2--3
+budgets with 3 seeds.
+
+\textbf{Policy evaluation.}
+\begin{itemize}
+  \item[P1] \emph{Primary; the bridge quantity.} Held-out human preference log-loss and accuracy of
+        $\sigma(d_\vartheta(X))$ on hidden human-labeled pairs. Because the loss is linear in the
+        target, the observed $Y$ can replace $p_X$ and the estimate is unbiased for
+        $R(\vartheta;p_X)$.
+  \item[P2] \emph{Generation quality.} Win rate against $\pi_{\mathrm{ref}}$ on held-out prompts,
+        scored by (i) a gold reward model trained on all $N$ human labels, following the gold-model
+        protocol of \citet{gao2023scaling}, and (ii) an LLM judge different from the training
+        judge.
+  \item[P3] KL divergence to $\pi_{\mathrm{ref}}$ and response length (a verbosity control).
+\end{itemize}
+\textbf{Headline plot.} Final policy quality versus human-label budget, with the all-human DPO
+reference as a horizontal line. The hypothesis is that \fsppo{} approaches this reference with a
+small fraction of the labels.
+
+\subsection{Decision gates}
+
+\begin{description}[leftmargin=0.9cm,style=nextline]
+  \item[G1] \emph{After E0/E2.} Is $G$ significantly positive? If not, the distributional channel
+        carries no information on this dataset. Reframe the paper around \sfsp{} plus the bridge and
+        report the negative result.
+  \item[G2] \emph{After E1.} Does \dfsp{} or \sfsp{} beat the linear map and isotonic recalibration at
+        $n/N\le5\%$? If not, the nonparametric machinery is not paying off; center the paper on the
+        theory and the bridge.
+  \item[G3] \emph{After the E6 pilot.} Does the Brier gain carry over to P1? If not, investigate
+        whether the misspecified regime of Proposition~\ref{prop:bridge} applies.
+\end{description}
