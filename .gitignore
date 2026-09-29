@@ -24,3 +24,7 @@
 *.swp
 *~
 .vscode/
+
+# Review-loop and ARIS artifacts (kept local, not synced to Overleaf)
+review-stage/
+.aris/

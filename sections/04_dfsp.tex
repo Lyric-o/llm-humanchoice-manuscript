@@ -95,8 +95,9 @@ together with a bandwidth grid $\mathbb H$, and choose
   (\hat\theta,\hat h)=\argmin_{(\theta,h)\in\Theta\times\mathbb H}\;
   \sum_{i\in\cI_{\mathrm{va}}}\norm{\phi(Y_i)-\hmu_{\theta,h}(Z_i)}^2 .
 \]
-Because $\theta_1=0$ is in the grid, the candidate family contains the human-only estimator, and a
-poor judge can be switched off by the data (Target result~\ref{tr:oracle}).
+Because $\theta_1=0$ is in the grid, the candidate family contains the human-only estimator on the
+same $Z$, so a poor \emph{offset} can be switched off by the data (Target result~\ref{tr:oracle}).
+This cannot undo a poor choice or corruption of $Z$ itself (Section~\ref{sec:theory}).
 
 \subsection{Two channels through which the judge distribution enters}
 \label{sec:two-channels}

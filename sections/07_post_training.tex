@@ -18,27 +18,35 @@ With $\hat p_{H,i}=\hmu(Z_i)$ from \dfsp{}, the soft-label objective is
 \]
 This loss is deliberately standard; soft-label DPO and GAPO already use soft targets
 \citep{lee2024rlaif,furuta2024gapo}. The contribution is where $\hat p_H$ comes from and what
-guarantee it carries. The \dfsp{} targets can equally be plugged into GAPO's objective, and we test
-both.
+guarantee it carries. \dfsp{} targets can also be plugged into GAPO's objective. We test that
+empirically, but the guarantees below cover only the soft cross-entropy loss.
+
+\paragraph{Bounded scorer.}
+All guarantees assume $|d_\vartheta|\le D$. We treat this as a \emph{constraint on the analyzed
+class}. In training it is implemented by clipping $d_\vartheta$ inside the loss, so the analyzed
+scorer is the clipped one that actually enters the objective. Proposition~\ref{prop:qg} needs a
+convex class, and therefore the constraint form rather than clipping.
 
 \paragraph{Ordinal or richer labels.}
 With a cumulative-link model \citep{mccullagh1980regression},
 $P_\vartheta(S=s\mid X)=G(\tau_{s+1}-d_\vartheta)-G(\tau_s-d_\vartheta)$, we minimize
 $-\sum_i\sum_s\widehat Q_H(s\mid X_i)\log P_\vartheta(S=s\mid X_i)$. Ordinal and strength-aware
-preference optimization already exist \citep{imai2026mixdpo}; what is new is the personalized
-target.
+preference optimization already exist \citep{imai2026mixdpo}; what is new is the personalized target.
 
 \subsection{Bridge: personalization error controls post-training excess risk}
 
-Let $R(\vartheta;p)=\E_X\,\ell(d_\vartheta(X);p(X))$ be the population preference risk under target
-$p$, and let $p_X=P(Y=1\mid X)$ be the human target.
+Let $R(\vartheta;p)=\E_X\,\ell(d_\vartheta(X);p(X))$, let $p_X=P(Y=1\mid X)$, and recall
+$R_X(\hat p)=\E(\hat p-p_X)^2=R(\hat p)+B_\zeta$. All three results below rest on one identity: since
+$\log\sigma(d)-\log\sigma(-d)=d$, the loss is \emph{linear in the target},
+$\ell(d;p)-\ell(d;p')=-(p-p')\,d$. They are standard target-perturbation and strong-convexity
+arguments. We state them because they turn the personalization rate into a post-training rate.
 
 \begin{proposition}[General bridge]
 \label{prop:bridge}
-Assume $\sup_\vartheta\sup_X|d_\vartheta(X)|\le D$. Let $\hat p$ be fixed (for example, cross-fitted
-on labels independent of the policy-optimization sample). Let $\hat\vartheta$ satisfy
-$R(\hat\vartheta;\hat p)\le\inf_\vartheta R(\vartheta;\hat p)+\varepsilon$, where $\varepsilon$
-collects generalization error over the $N$ pairs and optimization error. Then
+Assume $|d_\vartheta|\le D$. Let $\hat p$ be fixed (for example, cross-fitted on labels independent
+of the policy-optimization sample). Let
+$R(\hat\vartheta;\hat p)\le\inf_\vartheta R(\vartheta;\hat p)+\varepsilon$, where $\varepsilon$ collects
+generalization error over the $N$ pairs and optimization error. Then
 \[
   R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\;\le\;\varepsilon+2D\,\E|\hat p(X)-p_X|
   \;\le\;\varepsilon+2D\,R_X(\hat p)^{1/2}.
@@ -46,26 +54,47 @@ collects generalization error over the $N$ pairs and optimization error. Then
 \end{proposition}
 
 \begin{proof}
-Since $\log\sigma(d)-\log\sigma(-d)=d$, the loss is \emph{linear in the target}:
-$\ell(d;p)-\ell(d;p')=-(p-p')\,d$. Hence $|R(\vartheta;\hat p)-R(\vartheta;p_X)|\le D\,\E|\hat p-p_X|$
-for every $\vartheta$. For any $\vartheta'$, write
-$R(\hat\vartheta;p_X)-R(\vartheta';p_X)$ as
+By linearity, $|R(\vartheta;\hat p)-R(\vartheta;p_X)|\le D\,\E|\hat p-p_X|$ for every $\vartheta$. For
+any $\vartheta'$, write $R(\hat\vartheta;p_X)-R(\vartheta';p_X)$ as
 $[R(\hat\vartheta;p_X)-R(\hat\vartheta;\hat p)]+[R(\hat\vartheta;\hat p)-R(\vartheta';\hat p)]
-+[R(\vartheta';\hat p)-R(\vartheta';p_X)]$. Bound the first and third brackets as above and the second
-by $\varepsilon$, then take the infimum over $\vartheta'$. The last step is Cauchy--Schwarz.
++[R(\vartheta';\hat p)-R(\vartheta';p_X)]$. Bound the first and third brackets by linearity and the
+second by $\varepsilon$, then take the infimum over $\vartheta'$. The last step is Cauchy--Schwarz.
 \end{proof}
 
-The same argument covers any cross-entropy objective, including the ordinal one. The difference
-$-\sum_s\{\hat q(s)-q^{*}(s)\}\log P_\vartheta(s\mid X)$ is at most
-$\tfrac12\norm{\hat q-q^{*}}_1\cdot\operatorname{osc}_s\log P_\vartheta(s\mid X)$, and the oscillation is
-bounded when $d_\vartheta$ is bounded and the thresholds are fixed and separated.
+\begin{proposition}[Fast rate under quadratic growth; no realizability needed]
+\label{prop:qg}
+Suppose the induced scorer class $\mathcal D=\{d_\vartheta\}$ is a convex, closed subset of
+$L^2(P_X)$, with $\norm{d}_\infty\le D$ for all $d\in\mathcal D$. Let $d^{*}$ minimize $R(\cdot;p_X)$
+over $\mathcal D$, and let $c_D=\sigma(D)\{1-\sigma(D)\}$. If
+$R(\hat d;\hat p)\le\inf_{\mathcal D}R(\cdot;\hat p)+\varepsilon$, then
+\[
+  R(\hat d;p_X)-R(d^{*};p_X)\;\le\;2\varepsilon+\frac{2}{c_D}\,R_X(\hat p).
+\]
+\end{proposition}
 
-\begin{proposition}[Fast rate in the realizable case]
+\begin{proof}
+Let $\mathrm{Exc}=R(\hat d;p_X)-R(d^{*};p_X)$ and $a=\norm{\hat p-p_X}_{L^2}$. Linearity and the
+near-optimality of $\hat d$ under $\hat p$ give
+$\mathrm{Exc}\le\varepsilon+\E\{(\hat p-p_X)(\hat d-d^{*})\}\le\varepsilon+a\norm{\hat d-d^{*}}$.
+
+For quadratic growth, note that $\partial_d^2\ell(d;p)=\sigma(d)\{1-\sigma(d)\}\ge c_D$ on $[-D,D]$,
+whatever $p$ is. Along the segment $d^{*}+t(\hat d-d^{*})$, which stays in $\mathcal D$, the risk
+therefore has second derivative at least $c_D\norm{\hat d-d^{*}}^2$. Its first derivative at $t=0$
+is $\ge0$ by optimality over the convex set. Hence $\mathrm{Exc}\ge\tfrac{c_D}2\norm{\hat d-d^{*}}^2$.
+
+Combining the two bounds, $\mathrm{Exc}\le\varepsilon+a\sqrt{2\mathrm{Exc}/c_D}\le\varepsilon+\mathrm{Exc}/2+a^2/c_D$.
+\end{proof}
+
+Convexity of $\mathcal D$ holds for scorers that are linear in their parameters, such as fixed
+features or a linearized (NTK-style) regime. For LoRA-trained policies it is an idealization. The
+constant $c_D\approx e^{-D}$ degrades quickly as $D$ grows.
+
+\begin{proposition}[Realizable case]
 \label{prop:bridge-fast}
-Suppose $p_X$ and $\hat p$ take values in $[\kappa,1-\kappa]$. For $\hat p$ this can be enforced by
-projecting onto $[\kappa,1-\kappa]$, which by Lemma~\ref{lem:estimator}(ii) does not increase the
-error. Suppose also that for every such $p$ there is a $\vartheta$ with $\sigma(d_\vartheta)=p$
-$P_X$-almost surely. If $\hat\vartheta$ minimizes $R(\cdot;\hat p)$ exactly, then
+Suppose $p_X,\hat p\in[\kappa,1-\kappa]$. For $\hat p$ this can be enforced by projection, which
+does not increase the error. Suppose also that every $p:\{\text{pool pairs}\}\to[\kappa,1-\kappa]$ is
+realized by some $\vartheta$, i.e.\ $\sigma(d_\vartheta)=p$ almost surely, with $D\ge\operatorname{logit}(1-\kappa)$.
+If $\hat\vartheta$ minimizes $R(\cdot;\hat p)$ exactly, then
 \[
   R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)=\E\,\KL\bigl(\Ber(p_X)\,\|\,\Ber(\hat p)\bigr)
   \;\le\;\frac{R_X(\hat p)}{\kappa(1-\kappa)} .
@@ -78,30 +107,52 @@ $\sigma(d_{\hat\vartheta})=\hat p$ almost surely and $\inf_\vartheta R(\vartheta
 Finally, $\KL\le\chi^2=(p_X-\hat p)^2/\{\hat p(1-\hat p)\}$.
 \end{proof}
 
+\emph{When is realizability coherent?} Utility differences at a fixed prompt satisfy
+$d(A,B)+d(B,C)+d(C,A)=0$. So if a prompt's comparisons contain a cycle, not every assignment of
+probabilities can be realized; three cyclic probabilities of $0.75$ cannot. If each prompt's
+comparison graph is a \emph{forest} (for example, one pair per prompt, as in most pairwise datasets),
+any assignment of pairwise probabilities is consistent with some utility function. The assumption
+then reduces to the richness of the policy class. We will check the forest condition on the dataset.
+
 \keybox{\textbf{Chain.} $n$ human labels
 $\xrightarrow{\ \text{Targets \ref{tr:upper}, \ref{tr:oracle}}\ }$
-$R_X(\hat p)\lesssim r_n+\text{coarsening gap}$
-$\xrightarrow{\ \text{Props.\ \ref{prop:bridge}, \ref{prop:bridge-fast}}\ }$
-excess preference risk $\lesssim r_n^{1/2}$ (misspecified) or $r_n$ (realizable), $+\,\varepsilon_{\mathrm{gen}}(N)+\varepsilon_{\mathrm{opt}}$.}
+$R_X(\hat p)\lesssim r_n+B_\zeta$
+$\xrightarrow{\ \text{Props.\ \ref{prop:bridge}--\ref{prop:bridge-fast}}\ }$
+excess preference risk $\lesssim\varepsilon+\sqrt{r_n+B_\zeta}$ (bounded scorer), or
+$\lesssim\varepsilon+r_n+B_\zeta$ (quadratic growth or realizable).
+The coarsening gap $B_\zeta$ does not vanish with more human labels.}
 
-\begin{target}[Bridge under partial misspecification]
-\label{tr:bridge}
-Under a curvature (margin-type) condition with exponent $\alpha\in[0,1]$ on the policy class,
+\subsection{The carrying theorem}
+
+\begin{target}[End-to-end minimax rate for judge-assisted preference optimization]
+\label{tr:e2e}
+Consider binary labels under the following assumptions:
+\begin{itemize}
+  \item $Z$-sufficiency: $p_X=p_H^{*}(Z)$, so $B_\zeta=0$;
+  \item each prompt's comparison graph is a forest;
+  \item the policy class realizes every utility assignment with $|d|\le D$, where
+        $D\ge\operatorname{logit}(1-\kappa)$;
+  \item the judge is fixed and has interior slack, as in Target~\ref{tr:lower};
+  \item the policy step is idealized ($N\to\infty$, $\varepsilon=0$), which isolates the cost of
+        human labels.
+\end{itemize}
+Over the class $\mathcal F_\theta^{\kappa}$ of Target~\ref{tr:lower},
 \[
-  R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\lesssim\varepsilon+R_X(\hat p)^{(1+\alpha)/2}.
+  \inf_{\text{design},\ \text{procedure}}\ \sup_{\mathcal F_\theta^{\kappa}}\
+  \E\Bigl[R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\Bigr]
+  \;\asymp_\kappa\;\gamma_1^{\frac{2d}{2\gamma_2+d}}\,n^{-\frac{2\gamma_2}{2\gamma_2+d}}+\frac1n ,
 \]
-This interpolates between Proposition~\ref{prop:bridge} ($\alpha=0$) and
-Proposition~\ref{prop:bridge-fast} ($\alpha=1$). In the realizable case the rate should also be
-unimprovable. Every policy induces an estimator $\sigma(d_\vartheta)$ of $p_X$, and Pinsker's
-inequality gives excess risk $\ge 2\,\E\{\sigma(d_{\hat\vartheta})-p_X\}^2$. The estimation lower
-bound (Target result~\ref{tr:lower}) therefore transfers.
+where the procedure uses $n$ revealed human labels and the judge on the pool.
 \end{target}
 
-\paragraph{Scope of the bridge.}
-The bound controls the excess preference log-loss of the policy's implicit preference model against
-the human target. It does not control generation quality directly. The boundedness of $d_\vartheta$
-is an assumption; in practice it is enforced by clipping log-ratios. Section~\ref{sec:experiments}
-therefore also measures generation quality.
+\emph{Upper bound:} \dfsp{} (Targets~\ref{tr:upper} and~\ref{tr:oracle}) followed by
+Proposition~\ref{prop:bridge-fast}. \emph{Lower bound:} Pinsker's inequality gives excess
+$=\E\,\KL(\Ber(p_X)\,\|\,\Ber(\sigma(d_{\hat\vartheta})))\ge2\,\E\{\sigma(d_{\hat\vartheta})-p_X\}^2$.
+The policy therefore induces an estimator $\sigma(d_{\hat\vartheta})$ of $p_H^{*}$ from $n$ labels.
+Under the forest and richness conditions every member of $\mathcal F_\theta^{\kappa}$ is realizable,
+so Target~\ref{tr:lower} applies without shrinking the class. \emph{Message:} the human-label cost of
+post-training scales with the complexity $\gamma$ of the judge-to-human discrepancy, not with the
+complexity $\theta^{*}$ of human preference itself, and this cannot be improved.
 
 \keybox{\textbf{\textcolor{BrickRed}{Design decision D2: data reuse.}} (a) Cross-fit: split the pool
 into two folds, fit \dfsp{} on one fold's revealed labels, and produce targets on the other.

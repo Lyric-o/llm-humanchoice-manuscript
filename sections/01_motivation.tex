@@ -29,7 +29,9 @@ $\theta_1=0$, which recovers the target-only estimator. A variance-driven sample
 decides where to collect labels. They prove a minimax rate that improves on target-only estimation
 when the discrepancy is smoother, or has a smaller H\"older constant, than $f^{*}$ itself. They also
 prove a no-harm property when $f^{(\mathrm{ptr})}$ is uninformative. Their setting is scalar
-regression on $[0,1]^d$; it does not involve distributions as outputs or preference learning.
+regression on $[0,1]^d$. It includes binary classification (their Section~5.2), where the scalar
+predictor is already a Bernoulli probability. It does not treat graded or multi-category black-box
+outputs, and it does not involve preference learning or post-training.
 
 \paragraph{This proposal.}
 We (i) extend FSP from a scalar black-box predictor to a \emph{distribution-valued} black-box judge,

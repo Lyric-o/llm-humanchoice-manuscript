@@ -25,13 +25,20 @@ adaptive borrowing should revert to human-only estimation (E4). Both outcomes ar
 Risk & Mitigation \\
 \midrule
 Theory looks like a coordinatewise corollary of \citet{li2026personalizing} &
-Lead with Propositions~\ref{prop:scalar-vs-dist}, \ref{prop:judge-budget} and \ref{prop:bridge},
-the design rule, and the kernel case (Remark~\ref{rem:novelty-theory}). \\
+Rest the paper on Targets~\ref{tr:lower}, \ref{tr:design} and~\ref{tr:e2e}; present the
+propositions as tools (Remark~\ref{rem:novelty-theory}). \\
+The judge protocol adds nothing beyond $p_J$ ($G=0$) &
+Graded, two-order protocol J1; test $G$ with calibrated variable-importance inference (E2); gate G1. \\
+Targets stated without necessary conditions &
+Round-1 counterexamples are recorded next to Targets~\ref{tr:upper} and~\ref{tr:lower}; keep
+nondegeneracy, occupancy and slack conditions explicit. \\
 Curse of dimensionality in $Z$ &
 Localize on low-dimensional judge summaries ($d\le4$); these are natural covariates (Design D1). \\
 Judge support differs from the human label space &
 Use the link $T$; the distribution then enters through the localization channel
 (Section~\ref{sec:two-channels}). \\
+Test contamination across arms &
+Common prompt-level test set $\mathcal T$ fixed before acquisition and training. \\
 Single-label data cannot evaluate distribution-level metrics &
 Lemma~\ref{lem:heldout} makes Brier and RPS valid for comparing methods; use distribution-level
 metrics only on multi-annotator subsets. \\
@@ -49,16 +56,16 @@ distribution-valued targets with a post-training bridge. \\
 \subsection{Expected contributions}
 
 \begin{enumerate}[label=\textbf{C\arabic*.}]
-  \item \emph{Distributional few-shot personalization.} Personalization when the black-box
-        predictor is itself a conditional distribution, with an estimator that adaptively borrows
-        from a frozen judge using a few human labels. It includes an exact account of when the full
-        distribution beats its scalar summary.
-  \item \emph{Statistical optimality under scarce human feedback.} Minimax upper and lower bounds,
-        an adaptive no-harm guarantee, a judge-budget trade-off, and an acquisition rule driven by
-        human variability and local discrepancy complexity.
-  \item \emph{End-to-end post-training.} Real checkpoints trained against the personalized target,
-        with a bound linking distribution-estimation error to the policy's excess preference risk.
-        Policy quality is reported as a function of the human-label budget.
+  \item \emph{Distributional few-shot personalization.} Personalization of a graded,
+        two-order judge distribution with an estimator that adaptively borrows from a frozen judge
+        using a few human labels, together with a calibrated test of whether the distribution adds
+        information beyond $p_J$.
+  \item \emph{Statistical optimality under scarce human feedback.} Minimax lower bounds for bounded
+        preference targets with a fixed judge, and a finite-pool label design under the population
+        risk, driven by pool density, human variability and local discrepancy complexity.
+  \item \emph{End-to-end post-training.} An end-to-end minimax rate for judge-assisted preference
+        optimization (Target~\ref{tr:e2e}), and real checkpoints trained against the personalized
+        target, with policy quality reported as a function of the human-label budget.
 \end{enumerate}
 
 \subsection{Working titles and message}

@@ -57,9 +57,9 @@
 \DeclareMathOperator{\KL}{KL}
 \DeclareMathOperator{\tr}{tr}
 \DeclareMathOperator{\Cov}{Cov}
-\newcommand{\dfsp}{D-FSP}
-\newcommand{\sfsp}{S-FSP}
-\newcommand{\fsppo}{FSP-PO}
+\newcommand{\dfsp}{\textnormal{D-FSP}}
+\newcommand{\sfsp}{\textnormal{S-FSP}}
+\newcommand{\fsppo}{\textnormal{FSP-PO}}
 \newcommand{\todo}[1]{\textcolor{BrickRed}{[\textbf{TODO:} #1]}}
 
 \definecolor{boxbg}{RGB}{242,246,252}
@@ -69,7 +69,7 @@
 
 % ---------------------------------------------------------------------------
 \title{Distributional Few-Shot Personalization\\for Human-Anchored LLM Post-Training\\[6pt]
-\large Research proposal --- draft v0.1}
+\large Research proposal --- draft v0.2}
 \author{LLM-humanchoice project}
 \date{28 September 2026}
 
@@ -87,12 +87,14 @@ preference distributions. The proposal has three linked components: (I) a distri
 estimator (\dfsp) that corrects the judge through a locally smoothed discrepancy and contains the
 human-only estimator as a special case; (II) a label-acquisition rule derived from the estimator's
 integrated risk; and (III) post-training of an open-weight policy against the personalized target
-(\fsppo), with a bound that propagates the personalization error into the policy's excess
-preference risk. Two short results are already proved here: an exact decomposition that says when
-the full judge distribution beats its scalar summary, and an error-propagation bound from
-personalization to post-training. The minimax, adaptation and design results are stated as
-targets. All experiments are retrospective on an existing human-labeled dataset: a small fraction
-of labels is revealed and the rest are held out.
+(\fsppo), with bounds that propagate the personalization error into the policy's excess
+preference risk. Several short tool results are proved here: a nested-information decomposition
+that defines when the judge distribution adds information beyond its scalar summary, an oracle
+judge-budget bound, and bridges from personalization error to post-training excess risk (including
+a fast rate under quadratic growth). The carrying results are stated as targets: minimax lower
+bounds for bounded preference targets, finite-pool label design, and an end-to-end minimax rate for
+judge-assisted preference optimization. All experiments are retrospective on an existing
+human-labeled dataset, with a common test set held out by prompt.
 \end{abstract}
 
 \noindent\textbf{Reading guide.} \emph{Propositions} and \emph{Lemmas} are proved in this draft.

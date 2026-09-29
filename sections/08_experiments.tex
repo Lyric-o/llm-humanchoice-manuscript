@@ -4,111 +4,126 @@
 All experiments are retrospective on the human-labeled dataset supplied for this project. No new
 human-subject data are collected.
 
-\subsection{E0: Data, judges, and budgets}
+\subsection{E0: Data, splits, judges, and budgets}
 
 \begin{itemize}
-  \item \textbf{Dataset.} \todo{name, $N$, label structure (binary / ordinal / multi-annotator),
-        availability of prompts and response texts for post-training, license}. The label
-        structure determines the embedding $\phi$ and the metrics
-        (Section~\ref{sec:setup}).
-  \item \textbf{Judges.} J1: an open-weight judge with logit access, whose preference distribution
-        is the normalized token probabilities, as in RLAIF \citep{lee2024rlaif}. J2: a sampled
-        judge with $M$ stochastic calls per comparison, which yields dispersion features and the
-        judge-budget experiment E5. Both presentation orders are always used.
-        \todo{choose judge models}.
-  \item \textbf{Judge summaries $\psi$.} $p_J$; tie mass; entropy; position inconsistency
-        $|p_J^{AB}-(1-p_J^{BA})|$; dispersion across the $M$ samples.
+  \item \textbf{Dataset.} \todo{name, size, label structure (binary / graded / multi-annotator),
+        availability of prompt and response texts, license}. E0 must be finished before any main
+        experiment starts. Check the per-prompt forest condition of
+        Section~\ref{sec:post-training} as part of E0.
+  \item \textbf{Splits.} Split by prompt into an untouched test set $\mathcal T$ (20\%) and the pool
+        (80\%, size $N$), before any acquisition, E2-driven choice or policy training. All
+        estimation, acquisition and policy metrics are computed on $\mathcal T$. Every arm, including
+        the all-human reference, trains on the pool only.
+  \item \textbf{Judges.} J1 (primary) and J2 (secondary, E5 only) as defined in
+        Section~\ref{sec:setup}. \todo{judge model(s); J1 needs token-level log-probabilities}.
+  \item \textbf{Localization.} $Z_s=(p_J)$ and $Z_d=(p_J,t_J,o_J)$, stratified by task category.
+        Pre-register the D1 degeneracy check using pool data only.
   \item \textbf{Budgets.} $n/N\in\{1,2,5,10,20\}\%$, adapted to $N$. For the estimation experiments,
-        $50$ independent random reveals per budget, with all hidden labels as the test set.
+        $50$ independent random reveals per budget.
 \end{itemize}
 
 \subsection{E1: Estimation of the human preference distribution}
 
-\textbf{Methods.} Human-only (kernel on $Z$; logistic regression on $Z$); raw judge $\mJ$; scalar
-recalibration of $p_J$ (Platt, isotonic); the linear map of \citet{vandenburg2025aligning}; panel
-calibration \citep{li2026calibrate} when several judges are available; \sfsp; \dfsp.\\
-\textbf{Metrics.} Held-out Brier score, which equals $R_X$ up to a method-independent constant
-(Lemma~\ref{lem:heldout}); NLL; RPS for ordinal labels; reliability diagrams and ECE; distance to the
+\textbf{Methods.} Human-only (kernel on $Z_d$; logistic regression on $Z_d$); raw judge $\mJ$; scalar
+recalibration of $p_J$ (Platt, isotonic); the linear map of \citet{vandenburg2025aligning} applied to
+the full J1 output vector; panel calibration \citep{li2026calibrate} when several judges are available;
+\sfsp; \dfsp.\\
+\textbf{Metrics on $\mathcal T$.} Brier score, which equals $R_X$ up to a method-independent constant
+(Lemma~\ref{lem:heldout}); NLL; RPS for graded labels; reliability diagrams and ECE; distance to the
 empirical human distribution on multi-annotator items.\\
-\textbf{Headline plot.} Estimation error versus the number of revealed human labels.
+\textbf{Headline plot.} Test error versus the number of revealed human labels.
 
 \subsection{\texorpdfstring{E2: Does the judge distribution carry information beyond $p_J$?}{E2: Does the judge distribution carry information beyond p\_J?}}
 
 \begin{enumerate}[label=(\alph*)]
-  \item Estimate the information gain $G$ of Proposition~\ref{prop:scalar-vs-dist} on all $N$
-        labels. Fit cross-fitted nonparametric regressions on $Z_s=p_J$ and on $Z_d$, and compare
-        their held-out Brier scores with a paired bootstrap. This tests $G=0$.
-  \item Hold $p_J$ fixed and vary the rest of $\QJ$: within narrow $p_J$ bins, test whether human
-        label rates vary with the other judge features.
-  \item Locate the budget $n$ at which \dfsp{} overtakes \sfsp, and compare it with the prediction
-        from Proposition~\ref{prop:scalar-vs-dist}.
+  \item \emph{Inference on $G$.} Using pool labels only, estimate the variable importance $G$ of
+        $(t_J,o_J)$ given $p_J$ (Proposition~\ref{prop:scalar-vs-dist}). Use the cross-fitted,
+        algorithm-agnostic estimator of \citet{williamson2023general}, including its sample-splitting
+        version for the zero-importance null. The hypothesis and nuisance learners are fixed in
+        advance. A fitted-score comparison is \emph{not} used as a test: its expectation is
+        $G+R(\hmu_s)-R(\hmu_d)$.
+  \item \emph{Calibration of the test.} A synthetic study keeps the real judge outputs but replaces
+        the human labels with draws from $\Ber(g(p_J))$ (so $G=0$) and from $\Ber(g(p_J)+c\,t_J)$
+        (so $G>0$). It reports size and power of (a) at the pool sizes used.
+  \item \emph{Procedure comparison.} Compare \sfsp{} and \dfsp{} as prediction procedures across $n$,
+        on $\mathcal T$. The crossover budget is reported as an empirical finding, not predicted from
+        upper bounds.
 \end{enumerate}
+A failure to reject in (a) is evidence of low power or small $G$. It is not evidence that $G=0$.
 
 \subsection{E3: Label acquisition}
 
-Compare random reveal, the baselines of Section~\ref{sec:acquisition}, and rule \eqref{eq:design},
-using error-versus-$n$ curves. As a diagnostic, show the estimated maps $\hat\sigma(z)$ and
-$\hat\gamma_1(z)$ and where labels were placed.
+Compare random reveal, the baselines of Section~\ref{sec:acquisition}, and the plug-in rule from
+\eqref{eq:design}. All designs select from the pool only and are scored on the same test set
+$\mathcal T$, so no design can move hard comparisons out of its own evaluation. Diagnostics: the
+estimated maps $\hat\sigma(z)$, $\hat\gamma_1(z)$ and $\hat q(z)$, and where labels were placed.
 
 \subsection{E4: Stress tests of the no-harm property}
 
-Corrupt the judge in four ways:
-(a) constant logit shift $b$;
-(b) overconfidence, $\QJ\propto\QJ^{\tau}$ with $\tau>1$;
-(c) region-wise label reversal, swapping $A$ and $B$ within one task category or region of $\cZ$;
-(d) noise mixing, $\QJ\leftarrow(1-\epsilon)\QJ+\epsilon\,\mathrm{Dirichlet}$.\\
-\textbf{Predictions.} (a) and (b) produce smooth discrepancies, so \dfsp{} should keep most of its
-gain. (c) produces a discontinuous discrepancy, so $\hat\theta_1$ should shrink and the risk should
-approach the human-only estimator. In (d), as $\epsilon\to1$ the risk should approach the human-only
-estimator, confirming Target result~\ref{tr:oracle}. We report the path of $\hat\theta$ throughout.
+Two kinds of corruption are kept separate.
+\begin{itemize}
+  \item \emph{Offset corruption:} corrupt only $\mJ$ and keep $Z$ fixed. (a) Constant logit shift
+        $b$; (b) overconfidence, $\operatorname{logit}\mJ\mapsto\tau\operatorname{logit}\mJ$ with
+        $\tau>1$; (c) region-wise reversal $\mJ\mapsto1-\mJ$ within one task stratum; (d) noise
+        mixing toward a random prediction with weight $\epsilon$.
+  \item \emph{Representation corruption:} apply the same corruptions to the full $\QJ$, so that $Z$
+        also changes.
+\end{itemize}
+\textbf{Predictions.} Under offset corruption, (a) and (b) give smooth discrepancies, so \dfsp{}
+should keep most of its gain. (c) gives a discontinuous discrepancy within its stratum, so
+$\hat\theta_1$ should shrink there. In (d), as $\epsilon\to1$, \dfsp{} should approach the human-only
+estimator on the same $Z$, as Target~\ref{tr:oracle} predicts. Under representation corruption,
+no-harm relative to an uncorrupted $Z$ is \emph{not} expected; the size of this gap is reported. We
+report the path of $\hat\theta$ throughout.
 
-\subsection{E5: Judge budget}
+\subsection{E5: Judge budget (exploratory)}
 
-Vary $M\in\{1,2,4,\dots,64\}$ and check the saturation predicted by Proposition~\ref{prop:judge-budget}.
-Report the joint allocation of cost between judge calls $NM$ and human labels $n$.
+With protocol J2, vary $M\in\{1,2,4,\dots,64\}$ and compare the saturation of the \dfsp{} test error
+with the oracle information-loss bound of Proposition~\ref{prop:judge-budget}. No estimator-level
+claim is made.
 
 \subsection{E6: Post-training}
 
 \textbf{Policy.} A small open-weight instruction model trained with LoRA or QLoRA
-\citep{hu2022lora,dettmers2023qlora}. \todo{model, $\beta$, compute budget}. The pipeline is
+\citep{hu2022lora,dettmers2023qlora}. \todo{model, $\beta$, clipping level $D$, compute budget}. The
+pipeline is
 \[
-  \pi_0\to\text{judge all pairs}\to\QJ\to\dfsp\text{ with }n\text{ labels}\to\widehat Q_H
-  \to\text{preference optimization}\to\pi_{\mathrm{post}}.
+  \pi_0\to\text{judge pool}\to\QJ\to\text{\dfsp{} ($n$ labels)}\to\widehat Q_H
+  \to\text{pref.\ optimization}\to\pi_{\mathrm{post}}.
 \]
 $\pi_{\mathrm{post}}$ is a new checkpoint obtained by gradient updates.
 
-\textbf{Arms.} DPO on the $n$ human labels only; hard RLAIF (DPO on the judge's argmax over all
-$N$); soft RLAIF (soft DPO with targets $p_J$); GAPO with targets $p_J$; soft DPO with linear-map
-targets \citep{vandenburg2025aligning}; soft DPO with \sfsp{} targets; \fsppo{} (\dfsp{} targets),
-optionally combined with GAPO; a hybrid with human labels on $\cI_n$ and judge labels elsewhere, in
-the spirit of RLTHF; and, as an upper reference, DPO on all $N$ human labels. Each arm is run at 2--3
-budgets with 3 seeds.
+\textbf{Arms} (all trained on the pool). DPO on the $n$ human labels only; hard RLAIF (DPO on the
+judge's argmax over all $N$); soft RLAIF (soft DPO with targets $p_J$); GAPO with targets $p_J$; soft
+DPO with linear-map targets \citep{vandenburg2025aligning}; soft DPO with \sfsp{} targets; \fsppo{}
+(\dfsp{} targets); \fsppo{} targets inside GAPO (outside our guarantee); a hybrid with human labels
+on $\cI_n$ and judge labels elsewhere, in the spirit of RLTHF; and, as an upper reference, DPO on all
+$N$ pool human labels. Each arm is run at 2--3 budgets with 3 seeds.
 
-\textbf{Policy evaluation.}
+\textbf{Policy evaluation} (on the prompts and pairs of $\mathcal T$).
 \begin{itemize}
-  \item[P1] \emph{Primary; the bridge quantity.} Held-out human preference log-loss and accuracy of
-        $\sigma(d_\vartheta(X))$ on hidden human-labeled pairs. Because the loss is linear in the
-        target, the observed $Y$ can replace $p_X$ and the estimate is unbiased for
-        $R(\vartheta;p_X)$.
-  \item[P2] \emph{Generation quality.} Win rate against $\pi_{\mathrm{ref}}$ on held-out prompts,
-        scored by (i) a gold reward model trained on all $N$ human labels, following the gold-model
-        protocol of \citet{gao2023scaling}, and (ii) an LLM judge different from the training
-        judge.
+  \item[P1] \emph{Primary; the bridge quantity.} Human preference log-loss and accuracy of
+        $\sigma(d_\vartheta(X))$ on test pairs. Because the loss is linear in the target, the
+        observed $Y$ can replace $p_X$ and the estimate is unbiased for $R(\vartheta;p_X)$.
+  \item[P2] \emph{Generation quality (proxy evaluation).} Win rate against $\pi_{\mathrm{ref}}$ on test
+        prompts, scored by (i) a gold reward model trained on all pool human labels, following the
+        gold-model protocol of \citet{gao2023scaling}, and (ii) an LLM judge different from the
+        training judge. Both are proxies for human judgment and are reported as such.
   \item[P3] KL divergence to $\pi_{\mathrm{ref}}$ and response length (a verbosity control).
 \end{itemize}
-\textbf{Headline plot.} Final policy quality versus human-label budget, with the all-human DPO
-reference as a horizontal line. The hypothesis is that \fsppo{} approaches this reference with a
-small fraction of the labels.
+\textbf{Headline plot.} P1 and P2 versus human-label budget, with the all-human DPO reference as a
+horizontal line.
 
 \subsection{Decision gates}
 
 \begin{description}[leftmargin=0.9cm,style=nextline]
-  \item[G1] \emph{After E0/E2.} Is $G$ significantly positive? If not, the distributional channel
-        carries no information on this dataset. Reframe the paper around \sfsp{} plus the bridge and
-        report the negative result.
+  \item[G1] \emph{After E0/E2(a--b), on pool data only.} Is $G$ significantly positive under a test
+        with verified size? If not, reframe the paper around \sfsp{}, the design theory and the
+        bridge, and report the negative result.
   \item[G2] \emph{After E1.} Does \dfsp{} or \sfsp{} beat the linear map and isotonic recalibration at
-        $n/N\le5\%$? If not, the nonparametric machinery is not paying off; center the paper on the
-        theory and the bridge.
-  \item[G3] \emph{After the E6 pilot.} Does the Brier gain carry over to P1? If not, investigate
-        whether the misspecified regime of Proposition~\ref{prop:bridge} applies.
+        $n/N\le5\%$ on $\mathcal T$? If not, the nonparametric machinery is not paying off; center the
+        paper on Targets~\ref{tr:lower}, \ref{tr:design} and~\ref{tr:e2e}.
+  \item[G3] \emph{After the E6 pilot.} Does the Brier gain carry over to P1? If not, check whether the
+        bounded-scorer regime of Proposition~\ref{prop:bridge} is the operative one.
 \end{description}
