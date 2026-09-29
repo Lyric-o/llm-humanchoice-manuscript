@@ -16,8 +16,7 @@
 
 \theoremstyle{plain}
 \newtheorem{proposition}{Proposition}
-\newtheorem{target}{Target result}
-\renewcommand{\thetarget}{\Alph{target}}
+\newtheorem{goal}{Goal}
 
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\R}{\mathbb{R}}
@@ -29,7 +28,6 @@
 \DeclareMathOperator*{\argmin}{arg\,min}
 \newcommand{\dfsp}{\textnormal{D-FSP}}
 \newcommand{\sfsp}{\textnormal{S-FSP}}
-\newcommand{\fsppo}{\textnormal{FSP-PO}}
 
 \title{Distributional Few-Shot Personalization\\for Human-Anchored LLM Post-Training\\[6pt]
 \large Research proposal}
@@ -40,31 +38,30 @@
 \maketitle
 
 \begin{abstract}
-LLM judges are cheap and can report a full distribution over preference outcomes, but they do not
-agree with human raters, and human labels are expensive. We propose to treat the judge as a
-distribution-valued black-box predictor and to correct it toward human preferences using only a
-few human labels. The approach builds on the few-shot personalization framework of
-\citet{li2026personalizing}. The project has three parts:
+Preference labels for post-training language models are often produced by an LLM judge instead of
+by people. Judges are cheap but differ systematically from human raters, while human labels are
+accurate but scarce. We study how to combine judge outputs on many comparisons with human labels on
+a few, in order to estimate human preference probabilities and to train a model toward them.
+
+Our starting point is the few-shot personalization method of \citet{li2026personalizing}, which
+corrects a pretrained predictor using a small labeled sample. We apply it with three changes:
 \begin{itemize}
-  \item \emph{Distributional few-shot personalization} (\dfsp): the judge's win probability serves as
-        an offset, and a kernel estimate of the judge-to-human discrepancy, localized on summaries
-        of the judge distribution, corrects it.
-  \item \emph{A label-acquisition rule} that decides which comparisons humans should label.
-  \item \emph{Post-training (\fsppo)}: the corrected human preference probabilities serve as soft
-        targets for DPO-style training of an open-weight model.
+  \item the correction is estimated locally in a space of features of the judge's output
+        distribution, not only its win probability;
+  \item a sampling rule decides which comparisons should receive human labels;
+  \item the corrected probabilities are used as targets for preference optimization.
 \end{itemize}
-We aim to show three things: when the judge distribution carries information beyond its win
-probability, how few human labels are needed, and how the estimation error carries over to the
-post-trained policy. All experiments reuse an existing human-labeled dataset, revealing only a
-small fraction of its labels.
+The estimator reduces to a purely human estimator when the judge is unhelpful. We give conditions
+under which the judge's full output distribution improves on its win probability, and a bound on
+the post-trained model's preference risk in terms of the estimation error. All experiments reuse an
+existing human-labeled dataset.
 \end{abstract}
 
-\input{sections/01_introduction}
+\input{sections/01_motivation}
 \input{sections/02_setup}
-\input{sections/03_methods}
-\input{sections/04_theory}
+\input{sections/03_method}
+\input{sections/04_properties}
 \input{sections/05_experiments}
-\input{sections/06_contributions}
 
 \bibliographystyle{plainnat}
 \bibliography{references}

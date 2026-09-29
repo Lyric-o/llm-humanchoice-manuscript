@@ -2,54 +2,58 @@
 \label{sec:experiments}
 
 All experiments reuse the human-labeled comparison dataset provided for this project. We run the
-judge on every comparison and reveal $n$ human labels, with $n/N\in\{1,2,5,10,20\}\%$. The
-remaining labels, on a test set split by prompt, are used only for evaluation.
+judge on every comparison and use $n$ human labels, with $n/N\in\{1,2,5,10,20\}\%$. A test set split
+by prompt is used only for evaluation.
 
-\paragraph{E1: Estimating human preferences.}
-We compare \dfsp{} with the following baselines:
+\paragraph{E1: Estimation.}
+We compare \dfsp{} with the following estimators:
 \begin{itemize}
-  \item the raw judge;
-  \item a human-only estimator;
-  \item scalar recalibration of $p_J$ (Platt, isotonic);
+  \item the judge's win probability;
+  \item a kernel estimator using human labels only;
+  \item Platt scaling and isotonic regression of $p_J$;
   \item the linear map of \citet{vandenburg2025aligning};
-  \item a nonlinear calibrator (GAM or boosted trees) on the same judge summaries;
+  \item a GAM and boosted trees on $Z$;
   \item \sfsp.
 \end{itemize}
-Metrics are Brier score, log-loss and calibration error, reported against the number of revealed
-labels. Ablations use only tie mass or only order inconsistency, to see which part of the judge
-distribution helps.
+We report Brier score, log-loss and calibration error as functions of $n$. We also run \dfsp{} with
+only the tie probability or only the order dependence added to $p_J$.
 
-\paragraph{E2: Does the judge distribution add information?}
-We estimate and test the variable importance $G$ of $(t_J,o_J)$ given $p_J$
-\citep{williamson2023general}. We first check the test's size and power in a simulation where $G$ is
-known.
+\paragraph{E2: Does the judge's distribution add information?}
+We estimate $G$ from Proposition~\ref{prop:value} and test $G=0$ with the method of
+\citet{williamson2023general}. The test is first checked on simulated data with known $G$.
 
-\paragraph{E3: Label acquisition.}
-We compare the design of Section~\ref{sec:acquisition} with random sampling, judge-uncertainty
-sampling, Fisher-information selection \citep{shen2025active} and disagreement-based correction
-\citep{xu2025rlthf}. We do this first on synthetic data with known functions, then on the real data.
+\paragraph{E3: Label selection.}
+We compare the rule of Section~\ref{sec:selection} with the following alternatives:
+\begin{itemize}
+  \item random selection;
+  \item selection by judge uncertainty;
+  \item Fisher-information selection \citep{shen2025active};
+  \item selection of likely judge errors, as in \citet{xu2025rlthf}.
+\end{itemize}
+We run this comparison on simulated data with known $p_H$ and $\delta$, and on the real data.
 
-\paragraph{E4: Robustness to a poor judge.}
-We corrupt the judge in several ways: bias, overconfidence, reversal in part of the space, and added
-noise. We check that \dfsp{} reduces its reliance on the judge and approaches the human-only
-estimator.
+\paragraph{E4: Unreliable judge.}
+We corrupt the judge's probabilities in four ways: adding a bias, making them overconfident,
+reversing them in part of $\cZ$, and adding noise. We check that the selected $\theta_1$ decreases
+and that \dfsp{} approaches the human-only estimator.
 
 \paragraph{E5: Post-training.}
-We fine-tune a small open-weight model with LoRA \citep{hu2022lora}. The arms are:
+We fine-tune a small open-weight model with LoRA \citep{hu2022lora} under the following training
+targets:
 \begin{itemize}
-  \item DPO on the $n$ human labels only;
-  \item DPO on hard judge labels;
-  \item soft DPO and GAPO \citep{furuta2024gapo} with raw judge probabilities;
-  \item soft DPO with linear-map targets;
-  \item \fsppo{} with \dfsp{} targets;
-  \item DPO on all human labels, as a reference.
+  \item the $n$ human labels only;
+  \item hard judge labels;
+  \item judge probabilities, trained with soft DPO and with GAPO \citep{furuta2024gapo};
+  \item linear-map estimates;
+  \item \dfsp{} estimates;
+  \item all human labels, as a reference.
 \end{itemize}
-Evaluation has three parts:
-\begin{enumerate}
-  \item held-out human preference log-loss of the policy's implicit preference $\sigma(d_\vartheta)$,
-        which is the quantity bounded in Proposition~\ref{prop:bridge};
-  \item win rate against $\pi_{\mathrm{ref}}$, scored by a reward model trained on all human labels
-        \citep{gao2023scaling} and by an independent LLM judge;
-  \item KL divergence to $\pi_{\mathrm{ref}}$ and response length.
-\end{enumerate}
-The main plot shows policy quality against the number of human labels.
+We report the held-out human log-loss of $\sigma(d_\vartheta)$, which is the quantity in
+Proposition~\ref{prop:bridge}. We also report the win rate against $\pi_{\mathrm{ref}}$, scored by a
+reward model trained on all human labels \citep{gao2023scaling} and by a second judge. Finally, we
+report the KL divergence to $\pi_{\mathrm{ref}}$ and the response length.
+
+\paragraph{Possible outcomes.}
+If $G$ is close to zero, \dfsp{} should perform like \sfsp, and the value of the method lies in the
+correction and the label selection alone. If the judge is poor, \dfsp{} should perform like the
+human-only estimator. Both outcomes will be reported.

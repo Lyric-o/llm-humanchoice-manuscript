@@ -1,0 +1,112 @@
+\section{Properties}
+\label{sec:properties}
+
+We list the properties of the method. The first three follow directly from the definitions and are
+proved here. The remaining ones are the main theoretical goals of the project.
+
+\subsection{Properties that follow from the construction}
+
+\paragraph{Range and special cases.}
+The estimate $\hat p_{\theta,h}(z)$ always lies in $[0,1]$. Clipping cannot increase the error,
+because $p_H(z)\in[0,1]$. For $\theta_1=0$, and whenever the window around $z$ contains labeled
+points, $\hat p_{\theta,h}(z)$ is the average of the human labels in that window: an ordinary kernel
+estimator that ignores the judge. For large $\theta_1$, it is the judge's win probability plus a
+locally estimated correction. Because the validation grid contains $\theta_1=0$, the procedure can
+always fall back to the human-only estimator.
+
+\begin{proposition}[When the judge's distribution helps]
+\label{prop:value}
+Let $\hat p_{\mathrm S}$ and $\hat p_{\mathrm D}$ be the scalar and distributional estimators. They
+estimate $\E(Y\mid p_J)$ and $\E(Y\mid Z)$ respectively, and are fitted on data independent of the
+test point. Then
+\[
+  R_X(\hat p_{\mathrm S})-R_X(\hat p_{\mathrm D})
+  =G-\bigl\{R(\hat p_{\mathrm D})-R(\hat p_{\mathrm S})\bigr\},
+  \qquad
+  G=\E\bigl\{\E(Y\mid Z)-\E(Y\mid p_J)\bigr\}^2 ,
+\]
+where each $R(\cdot)$ is measured against the estimator's own target.
+\end{proposition}
+
+\noindent\emph{Proof.} Since $p_J$ is a function of $Z$, $\E(Y\mid p_J)=\E\{\E(Y\mid Z)\mid p_J\}$.
+The identity follows from orthogonality of conditional expectations.\qed
+
+\medskip
+$G$ measures how much the tie probability and order dependence add to the win probability for
+predicting human labels. It is the numerator of a nonparametric variable-importance measure
+\citep{williamson2021nonparametric,williamson2023general}. The braced term is the extra estimation
+error from working in three dimensions instead of one. The judge's full distribution improves on
+its win probability exactly when $G$ exceeds this extra error.
+
+\begin{proposition}[Estimation error and post-training]
+\label{prop:bridge}
+Let $R(\vartheta;p)$ be the population version of the training loss with targets $p$. Suppose
+$|d_\vartheta|\le D$, and that $\hat\vartheta$ minimizes $R(\cdot;\hat p)$ up to an error
+$\varepsilon$ from optimization and finite samples. Then
+\[
+  R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\;\le\;\varepsilon+2D\,R_X(\hat p)^{1/2}.
+\]
+If in addition the set of functions $\{d_\vartheta\}$ is convex, the right-hand side can be
+replaced by $2\varepsilon+2R_X(\hat p)/c_D$, where $c_D=\sigma(D)\{1-\sigma(D)\}$.
+\end{proposition}
+
+\noindent\emph{Proof sketch.} Since $\log\sigma(d)-\log\sigma(-d)=d$, the loss is linear in the
+target, with $\ell(d;p)-\ell(d;p')=-(p-p')\,d$. Replacing $p_X$ by $\hat p$ therefore changes the risk
+of every model by at most $D\,\E|\hat p-p_X|$, which gives the first bound. When $\{d_\vartheta\}$ is
+convex, the logistic loss grows at least quadratically around its minimizer, with curvature at
+least $c_D$, which gives the second.\qed
+
+\medskip
+Thus the quality of the post-trained model, measured by its preference risk against human labels,
+is controlled by the estimation error of $\hat p$. The part of $R_X$ that the judge features cannot
+explain remains no matter how many human labels are used.
+
+\subsection{Theoretical goals}
+
+Assume the following:
+\begin{enumerate}[label=(\roman*)]
+  \item $p_H$ is H\"older with constant $\theta_1^{*}$ and exponent $\theta_2^{*}$;
+  \item $p_H$ takes values in $[\kappa,1-\kappa]$ for some $\kappa>0$;
+  \item the labeled points have a density bounded above and below on a regular subset of $\cZ$;
+  \item the bandwidth satisfies $nh^d\gtrsim\log n$.
+\end{enumerate}
+Let $(\gamma_1,\gamma_2)$ be the H\"older constant and exponent of the correction after truncation.
+These parameters measure how complex the judge's error is.
+
+\begin{goal}[Convergence rate]
+For fixed $\theta$ and a suitable bandwidth,
+\[
+  R(\hat p_{\theta,h})\;\lesssim\;\gamma_1^{\frac{2d}{2\gamma_2+d}}\,
+  n^{-\frac{2\gamma_2}{2\gamma_2+d}}+\frac1n .
+\]
+\end{goal}
+
+The human-only estimator has the same rate with $(\gamma_1,\gamma_2)$ replaced by
+$(\theta_1^{*},\theta_2^{*})$. The judge therefore reduces the number of labels needed when its error
+is smaller ($\gamma_1<\theta_1^{*}$) or smoother ($\gamma_2>\theta_2^{*}$) than the human preference
+function itself.
+
+\begin{goal}[Optimality]
+Suppose the judge lies strictly inside the probability range and the smoothness class of $p_H$,
+and $\theta_2^{*}\le\gamma_2\le1$. Then no estimator and no labeling scheme, including sequential
+schemes, achieves a faster rate than in Goal~1.
+\end{goal}
+
+\begin{goal}[Adaptation]
+With $(\hat\theta,\hat h)$ chosen by validation,
+\[
+  R(\hat p_{\hat\theta,\hat h})\le C\min_{\theta,h}R(\hat p_{\theta,h})+O\{(\log n)^2/n\}.
+\]
+In particular, \dfsp{} is not worse than the human-only estimator, up to a constant factor and the
+remainder term.
+\end{goal}
+
+\begin{goal}[Label selection]
+The two-stage rule of Section~\ref{sec:selection} achieves the error bound of the optimal density
+$p^{*}$, up to the cost of the pilot sample. No labeling scheme can improve the rate itself
+\citep{castro2005faster}. The gain is in the constant.
+\end{goal}
+
+Combining Goals~1--3 with Proposition~\ref{prop:bridge} gives a rate for the post-trained model: its
+preference risk is governed by the complexity of the judge's error, not by the complexity of human
+preferences.

@@ -15,12 +15,11 @@ Manuscript repository for the LLM-humanchoice project. It currently holds the **
 | Path | Role |
 |---|---|
 | `main.tex` | Title, abstract, macros, section order |
-| `sections/01_introduction.tex` | Problem, starting point (Li & Zhang), the three parts, related work |
-| `sections/02_setup.tex` | Data, graded two-order judge protocol, summaries (p_J, t_J, o_J), target and risk |
-| `sections/03_methods.tex` | Method I (D-FSP), Method II (label acquisition), Method III (FSP-PO) and the bridge proposition |
-| `sections/04_theory.tex` | Assumptions and target results (upper bound, lower bound, adaptation) |
-| `sections/05_experiments.tex` | E1–E5: estimation, information test, acquisition, robustness, post-training |
-| `sections/06_contributions.tex` | Expected contributions |
+| `sections/01_motivation.tex` | Problem, what the judge provides, limits of current approaches, our approach |
+| `sections/02_setup.tex` | Data, judge features (p_J, t_J, o_J), targets and error measures |
+| `sections/03_method.tex` | D-FSP estimator, label selection rule, post-training loss |
+| `sections/04_properties.tex` | Proved properties (range, value of the judge distribution, post-training bound) and theoretical goals |
+| `sections/05_experiments.tex` | E1–E5 and possible outcomes |
 | `references.bib` | Bibliography |
 
 ## Local build

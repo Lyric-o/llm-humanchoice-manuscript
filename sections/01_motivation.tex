@@ -1,0 +1,59 @@
+\section{Motivation}
+\label{sec:motivation}
+
+\paragraph{The problem.}
+Preference-based post-training needs, for many prompts, a judgment of which of two responses is
+better. Collecting these judgments from people is slow and expensive, so they are often produced by
+another language model acting as a judge
+\citep{bai2022constitutional,zheng2023judging,lee2024rlaif}. Judges are known to differ from human
+raters in systematic ways, for example in their sensitivity to the order in which the two responses
+are shown and to response length \citep{zheng2023judging}. A model trained on judge labels
+therefore learns the judge's preferences, not those of people.
+
+In practice some human labels are usually available, but only for a small fraction of the
+comparisons. This leads to the question studied here: given judge outputs on all comparisons and
+human labels on a few, how should we estimate what people would prefer on every comparison, and
+how should a model be trained toward that estimate?
+
+\paragraph{What the judge provides.}
+A judge gives more than a verdict. We can read the probabilities it assigns to graded outcomes
+(strong preference, weak preference, tie). We can also query it twice, with the responses shown in
+both orders. This yields a win probability, and in addition a tie probability and a measure of how
+much the judge's answer depends on the presentation order. These additional quantities may
+indicate where the judge is unreliable relative to humans. A method that uses only the win
+probability cannot exploit this.
+
+\paragraph{Limitations of current approaches.}
+Existing approaches fall into three groups.
+\begin{itemize}
+  \item \emph{Use the judge directly.} Judge probabilities serve as soft labels for reward modeling
+        or preference optimization \citep{lee2024rlaif,furuta2024gapo}. This inherits the judge's
+        systematic errors.
+  \item \emph{Correct the judge with a few human labels.} This can be done with a fitted linear map
+        \citep{vandenburg2025aligning}, a jointly weighted Bradley--Terry model \citep{cai2026dial},
+        or by relabeling selected examples \citep{xu2025rlthf}. These methods either assume a fixed
+        parametric relation between judge and human preferences or correct individual labels. They
+        do not estimate how the judge's error varies across comparisons.
+  \item \emph{Use the human labels alone.} This is statistically inefficient when labels are few.
+\end{itemize}
+
+\paragraph{Our approach.}
+\citet{li2026personalizing} study a closely related problem in nonparametric regression. A
+pretrained predictor is given, and a few labeled samples from the target population are used to
+correct it. The difference between the target function and the predictor is estimated by a local
+kernel estimator, after truncating the local variation of the predictor. The amount of truncation
+is chosen by validation. The resulting estimator uses the predictor where it is accurate and
+reduces to a standard kernel estimator where it is not, and it attains the minimax rate. Their
+setting is scalar regression and does not involve preference data or model training.
+
+We apply this method to LLM judges, with the judge's win probability in the role of the pretrained
+predictor. The project has three parts.
+\begin{enumerate}
+  \item \textbf{Estimation (\dfsp).} We estimate human preference probabilities by correcting the
+        judge's win probability. The correction is estimated locally in the space of judge
+        features (win probability, tie probability, order dependence).
+  \item \textbf{Label selection.} We derive a rule for choosing which comparisons to send to human
+        annotators. It minimizes a bound on the estimation error.
+  \item \textbf{Post-training.} We use the estimated probabilities as targets for DPO-style
+        training, and bound the trained model's preference risk by the estimation error.
+\end{enumerate}

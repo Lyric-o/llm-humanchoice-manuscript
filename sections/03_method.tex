@@ -1,0 +1,95 @@
+\section{Method}
+\label{sec:method}
+
+\subsection{Estimating human preferences (\dfsp)}
+\label{sec:dfsp}
+
+We write the human preference probability as the judge's win probability plus a correction,
+\[
+  p_H(z)=p_J(z)+\delta(z),
+\]
+where $p_J(z)$ is the first coordinate of $z$. Instead of estimating $p_H$ from the human labels
+alone, we estimate the correction $\delta$. When the judge is reasonably accurate, $\delta$ is small
+or varies slowly, so it can be estimated from fewer labels than $p_H$.
+
+\paragraph{Truncation.}
+Following \citet{li2026personalizing}, fix a point $z$ and a parameter $\theta=(\theta_1,\theta_2)$
+with $\theta_1\ge0$ and $0<\theta_2\le1$. Define
+\[
+  \omega_{\theta,z}(z')=p_J(z)+\min\bigl\{|p_J(z')-p_J(z)|,\ \theta_1\norm{z'-z}^{\theta_2}\bigr\}\,
+  \operatorname{sgn}\{p_J(z')-p_J(z)\}.
+\]
+This limits how far the judge's prediction may move away from its value at $z$ as $z'$ moves away
+from $z$. The parameter $\theta_1$ controls how much of the judge is used. For $\theta_1=0$,
+$\omega_{\theta,z}$ is constant and the judge plays no role in the local fit. For large $\theta_1$,
+$\omega_{\theta,z}=p_J$.
+
+\paragraph{Estimator.}
+Let $K_h(z',z)=\ind\{\norm{z'-z}_\infty\le h\}$. The estimated correction at $z$ is the local average
+of the residuals $Y_i-\omega_{\theta,z}(Z_i)$,
+\[
+  \hat\delta_{\theta,h}(z)=\frac{\sum_{i\in\cI_n}K_h(Z_i,z)\{Y_i-\omega_{\theta,z}(Z_i)\}}
+                                 {1\vee\sum_{i\in\cI_n}K_h(Z_i,z)},
+\]
+and the estimated preference probability is
+\[
+  \hat p_{\theta,h}(z)=\min\bigl[1,\max\{0,\ p_J(z)+\hat\delta_{\theta,h}(z)\}\bigr].
+\]
+
+\paragraph{Procedure.}
+\begin{enumerate}
+  \item Split the $n$ labeled comparisons into a fitting part and a validation part.
+  \item For each $(\theta,h)$ in a grid that includes $\theta_1=0$, compute $\hat p_{\theta,h}$ on
+        the fitting part.
+  \item Choose $(\hat\theta,\hat h)$ with the smallest validation Brier score.
+  \item Report $\hat p=\hat p_{\hat\theta,\hat h}$ on all comparisons.
+\end{enumerate}
+We call this estimator distributional few-shot personalization (\dfsp). The same procedure with $Z$
+replaced by $p_J$ alone is the scalar version, \sfsp.
+
+\subsection{Choosing which comparisons to label}
+\label{sec:selection}
+
+When the human budget is fixed, the choice of which comparisons to label affects the error. Let
+$q$ be the density of $Z$ over all comparisons and $p$ the density of the labeled ones. Write
+$\sigma^2(z)=p_H(z)\{1-p_H(z)\}$ for the label noise and $\gamma_1(z)$ for the local H\"older
+constant of the correction $\delta$ near $z$, with H\"older exponent $\gamma_2$.
+
+With a bandwidth chosen separately at each point, the error of \dfsp{} at $z$ is bounded by a bias
+term $\gamma_1(z)^2h^{2\gamma_2}$ plus a variance term $\sigma^2(z)/\{np(z)h^d\}$. Minimizing the
+$q$-weighted sum of these bounds over $p$ gives
+\[
+  p^{*}(z)\;\propto\;q(z)^{\frac{2\gamma_2+d}{4\gamma_2+d}}\;
+  \gamma_1(z)^{\frac{2d}{4\gamma_2+d}}\;\sigma(z)^{\frac{4\gamma_2}{4\gamma_2+d}} .
+\]
+The rule assigns more labels to comparisons that are frequent ($q$ large), on which people
+disagree ($\sigma$ large), and where the correction changes quickly ($\gamma_1$ large). A constant
+correction is learned from few labels even if it is large. The rule therefore differs from
+labeling the comparisons on which the judge is most uncertain.
+
+The rule depends on unknown quantities, so we use it in two stages:
+\begin{enumerate}
+  \item Label a small random pilot sample and fit \dfsp{} on it.
+  \item Estimate $\sigma$ from the pilot fit, and $\gamma_1$ from local differences of the fitted
+        correction.
+  \item Plug these estimates into $p^{*}$, mix the result with $q$, and draw the remaining labels
+        from the pool with this density.
+\end{enumerate}
+
+\subsection{Post-training}
+\label{sec:post-training}
+
+Let $\pi_{\mathrm{ref}}$ be the initial model and $\pi_\vartheta$ the model being trained. As in DPO
+\citep{rafailov2023dpo}, define
+\[
+  d_\vartheta(X)=\beta\Bigl[\log\frac{\pi_\vartheta(y_A\mid x)}{\pi_{\mathrm{ref}}(y_A\mid x)}
+  -\log\frac{\pi_\vartheta(y_B\mid x)}{\pi_{\mathrm{ref}}(y_B\mid x)}\Bigr],
+\]
+so that $\sigma(d_\vartheta)$ is the model's implied probability that $y_A$ is preferred. We train on
+all $N$ comparisons, using the estimated probabilities $\hat p_i=\hat p(Z_i)$ as targets:
+\[
+  \widehat R(\vartheta;\hat p)=-\frac1N\sum_{i=1}^{N}
+  \Bigl[\hat p_i\log\sigma\{d_\vartheta(X_i)\}+(1-\hat p_i)\log\sigma\{-d_\vartheta(X_i)\}\Bigr].
+\]
+This is the usual soft-label DPO loss \citep{lee2024rlaif,furuta2024gapo}. The difference from
+existing work is that the targets come from \dfsp{} rather than directly from the judge.
