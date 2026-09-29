@@ -118,7 +118,8 @@ This result has three limits.
 \begin{assumption}[Regularity]
 \label{ass:reg}
 The continuous part of $Z$ ranges over a compact set $\cZ\subset\R^d$ (after stratifying on discrete
-features), such as the polytope of Section~\ref{sec:setup}, with the interior cone condition
+features), such as the regular subset $\cZ_0$ of the polytope in Section~\ref{sec:setup}, with the
+interior cone condition
 $\mathrm{vol}\{B_\infty(z,h)\cap\cZ\}\ge c_{\cZ}h^d$ for all $z\in\cZ$ and $h\le1$.
 \begin{enumerate}[label=(\alph*)]
   \item $\norm{\muH(z)-\muH(z')}_{\cH}\le\theta_1^{*}\norm{z-z'}^{\theta_2^{*}}$ with
@@ -159,7 +160,9 @@ $nh^d\ge C\log n$,
 
 \begin{target}[Minimax lower bound for bounded preference probabilities]
 \label{tr:lower}
-Consider binary labels and a \emph{fixed} judge (not part of the supremum) that satisfies:
+Write $\mathcal H(a,b)$ for the H\"older class of Definition~1 in \citet{li2026personalizing}: all
+$f$ with $|f(z)-f(z')|\le a\norm{z-z'}^{b}$, where $0<b\le1$. Consider binary labels and a \emph{fixed}
+judge (not part of the supremum) that satisfies:
 \begin{itemize}
   \item \emph{probability slack:} $\mJ(z)\in[2\kappa,1-2\kappa]$;
   \item \emph{regularity slack:} $\mJ\in\mathcal H(\theta_1^{*}/2,\theta_2^{*})$ on $\cZ$.
@@ -170,7 +173,7 @@ $\delta_{\theta,z}=p_H^{*}-\mJ$ for every $z$. Let $\mathcal F^{\kappa}(\theta^{
 of $p_H^{*}=\mJ+\delta$ with $p_H^{*}\in[\kappa,1-\kappa]\cap\mathcal H(\theta^{*})$ and
 $\delta\in\mathcal H(\gamma)$. Assume the compatibility conditions
 \[
-  \gamma_2\ge\theta_2^{*},\qquad \gamma_1\le\min\{\kappa/2,\ c_{\cZ}'\theta_1^{*}/2\},
+  0<\theta_2^{*}\le\gamma_2\le1,\qquad \gamma_1\le\min\{\kappa/2,\ c_{\cZ}'\theta_1^{*}/2\},
 \]
 where $c_{\cZ}'=\mathrm{diam}(\cZ)^{\theta_2^{*}-\gamma_2}$ converts $\mathcal H(\gamma)$ into a
 H\"older-$\theta_2^{*}$ bound. Then for $n\ge n_0(\kappa)$,
@@ -198,9 +201,19 @@ counterexamples.
 $p_H^{*}=\mJ+c+\sum_k\omega_k\gamma_1h^{\gamma_2}\varphi((z-z_k)/h)$ with disjoint supports, a
 constant $|c|\le n^{-1/2}\le\kappa/2$, and $\sum$bumps$\le\kappa/2$. Its H\"older-$\gamma$ norm is
 $\le\gamma_1$; its H\"older-$\theta^{*}$ norm is at most $\theta_1^{*}/2+\gamma_1/c'_{\cZ}\le\theta_1^{*}$; and
-it stays inside $[\kappa,1-\kappa]$. Sequential designs are covered because each query informs at
-most one bump, as in the active-learning lower bounds of \citet{castro2005faster}. They show that for
-H\"older classes, active and passive sampling share the same minimax rate. \emph{Consequence for
+it stays inside $[\kappa,1-\kappa]$. Sequential designs are handled by the chain rule for KL divergence, as in the active-learning lower
+bounds of \citet{castro2005faster}. Their model is Gaussian; for Bernoulli labels the step is as
+follows. Let $a=\gamma_1h^{\gamma_2}$ be the bump amplitude, $\omega^{(k)}$ the vertex $\omega$ with
+coordinate $k$ flipped, and $T_k$ the number of queries landing in bump $k$'s support. Since all
+probabilities lie in $[\kappa,1-\kappa]$,
+$\KL(\Ber(p)\,\|\,\Ber(p'))\le(p-p')^2/\{\kappa(1-\kappa)\}$. Hence
+\[
+  \KL\bigl(P_\omega,P_{\omega^{(k)}}\bigr)\;\lesssim_\kappa\;a^2\,\E_\omega T_k,
+  \qquad \textstyle\sum_kT_k\le n .
+\]
+Averaging over $k$ in Assouad's lemma then gives the passive rate, whatever the query rule. So for
+H\"older classes, active and passive sampling share the minimax rate
+\citep[shown for Gaussian noise by][]{castro2005faster}. \emph{Consequence for
 Method~II:} design can improve constants but not the rate.
 
 \begin{target}[Adaptation and no harm]

@@ -2,10 +2,17 @@
 \label{sec:setup}
 
 \paragraph{Data.}
-Comparisons $X=(x,y_A,y_B)$ are drawn from $P_X$. Before anything else, we set aside an untouched
-\emph{test set} $\mathcal T$, split by prompt. It is used for no acquisition decision, model choice
-or policy training. The remaining comparisons form the \emph{pool} $X_1,\dots,X_N$. A frozen judge is
-queried on every pool and test comparison. The dataset supplied for this project already contains a
+Comparisons $X=(x,y_A,y_B)$ are drawn from $P_X$. Before anything else, the data are split by
+prompt into four parts (Section~\ref{sec:experiments}):
+\begin{itemize}
+  \item an untouched \emph{test set} $\mathcal T$, used for no acquisition decision, model choice or
+        policy training;
+  \item a \emph{development set} $\mathcal V$, used only for shared policy-step hyperparameters;
+  \item a \emph{diagnostic set} $\mathcal G$, used only for E2;
+  \item the \emph{pool} $X_1,\dots,X_N$.
+\end{itemize}
+A frozen judge is queried on every comparison, twice under protocol J1 (once per presentation
+order). The dataset supplied for this project already contains a
 human label $Y_i$ for every comparison. During training, only the pool labels indexed by
 $\cI_n\subset[N]$, $|\cI_n|=n\ll N$, are revealed. \textbf{No new human annotation is collected.}
 
@@ -90,16 +97,26 @@ CDFs.) Graded human targets are therefore an extension, which would need $Z$ to 
 vector ($d=4$ after the simplex constraint). They are not part of the main plan.
 
 \paragraph{Feasible support.}
-The coordinates are deterministically constrained:
-$w(Q)\in[\tfrac12Q(\text{tie}),1-\tfrac12Q(\text{tie})]$ gives $t_J\le2\min(p_J,1-p_J)$ and
-$o_J\le1-t_J$. The support of $(p_J,t_J,o_J)$ therefore lies in the polytope
+The coordinates are deterministically constrained. Write $w_1=w(\QJ^{AB})$ and $w_2=w(\QJ^{BA})$,
+so $p_J=(w_1+w_2)/2$ and $o_J=|w_1-w_2|$. Then:
+\begin{itemize}
+  \item $w_i\in[0,1]$ gives $o_J\le2\min(p_J,1-p_J)$;
+  \item $w(Q)\in[\tfrac12Q(\text{tie}),1-\tfrac12Q(\text{tie})]$ gives $t_J\le2\min(p_J,1-p_J)$ and
+        $t_J+o_J\le1$.
+\end{itemize}
+For unrestricted pairs of five-label distributions these are also sufficient. (Take
+$w_{1,2}=p\pm o/2$ and split the tie mass subject to $t_i\le2\min(w_i,1-w_i)$.) The feasible region
+is therefore exactly
 \[
-  \cZ=\{(p,t,o):\ 0\le t\le2\min(p,1-p),\ 0\le o\le1-t\}\subsetneq[0,1]^3 ,
+  \cZ=\bigl\{(p,t,o):\ 0\le t\le2\min(p,1-p),\ 0\le o\le\min\{2\min(p,1-p),\,1-t\}\bigr\}
+  \subsetneq[0,1]^3 ,
 \]
-which has nonempty interior. The theory of Section~\ref{sec:theory} is stated on $\cZ$ (or on a
-regular subset of it), not on the cube. Density estimation, occupancy and acquisition use the same
-support. Under J1 the coordinates are continuous. Whether they fill a regular subset of $\cZ$ is
-checked in the E0 feasibility pilot; if $t_J$ concentrates near $0$, the effective dimension drops.
+a polytope with nonempty interior. The theory of Section~\ref{sec:theory} is stated on a regular
+subset $\cZ_0\subseteq\cZ$, specified after the pilot, on which the densities are assumed bounded
+below. It is not stated on the cube. Density estimation, occupancy and acquisition use the same
+$\cZ_0$. Under J1 the coordinates are continuous. The E0 feasibility pilot is a
+\emph{diagnostic} for support and degeneracy (for example, $t_J$ concentrating near $0$); it cannot
+verify a population density lower bound.
 
 \paragraph{Estimand.}
 \[
@@ -110,7 +127,8 @@ and the coarsening gap $B_\zeta=\E\norm{\muH(Z)-\mu_X}^2$ is irreducible for any
 only $Z$ (Section~\ref{sec:scalar-vs-dist}).
 
 \keybox{\textbf{\textcolor{BrickRed}{Design decision D1: the localization variable $\zeta$.}}
-Default: $Z_d=(p_J,t_J,o_J)$ on the polytope $\cZ$, stratified by task category, so $d=3$. A
+Default: $Z_d=(p_J,t_J,o_J)$ on a regular subset $\cZ_0$ of the polytope $\cZ$, stratified by task
+category, so $d=3$. A
 high-dimensional content embedding is excluded from the main method because of the curse of
 dimensionality. The representation is frozen after the E0 feasibility pilot, using judge outputs
 only and no human labels. If $t_J$ or $o_J$ is nearly degenerate there, it is dropped at that

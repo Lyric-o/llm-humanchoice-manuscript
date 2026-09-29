@@ -14,11 +14,17 @@ human-subject data are collected.
         things: that $(p_J,t_J,o_J)$ fill a regular subset of the polytope $\cZ$; that
         $\E\,\mathrm{Var}(t_J\mid p_J,S)>0$ and $\E\,\mathrm{Var}(o_J\mid p_J,S)>0$ within task
         strata $S$; the per-prompt forest condition (Section~\ref{sec:post-training}); and judge
-        cost. The representation (Design D1) and all budgeted procedures, including grids and
-        learners, are frozen after this pilot.
+        cost. This pilot is a diagnostic for support and degeneracy, not a verification of density
+        lower bounds. The representation (Design D1) and all budgeted procedures, including
+        \dfsp{} grids and learners, are frozen after this pilot. \dfsp{}'s own $(\theta,h)$
+        selection uses validation labels drawn from its $n$.
   \item \textbf{Splits,} all by prompt and all made before any acquisition or training. An untouched
         test set $\mathcal T$ (20\%) is used only for final reporting. A development split
-        $\mathcal V$ (10\%) is used for any pipeline tuning ($\beta$, $D$, grids). A diagnostic split
+        $\mathcal V$ (10\%) is used only for policy-step hyperparameters ($\beta$, $D$, learning
+        rate). These are shared by all arms, and at most $n_{\mathcal V}=500$ of its labels are used.
+        Results are therefore reported as \emph{$n$ pool labels plus a shared development set of
+        $n_{\mathcal V}$ labels}, never as ``only $n$ labels''. An ablation fixes $\beta,D$ at
+        default values without $\mathcal V$. A diagnostic split
         $\mathcal G$ (20\%) is used only for E2. The pool (50\%, size $N$) is where budgeted
         procedures reveal labels and every policy arm trains, including the all-human reference.
         Labels in $\mathcal G$ never enter a budgeted procedure; E2 affects only how results are
@@ -35,8 +41,12 @@ human-subject data are collected.
 
 \textbf{Methods.} Human-only (kernel on $Z_d$; logistic regression on $Z_d$); raw judge $\mJ$; scalar
 recalibration of $p_J$ (Platt, isotonic); the linear map of \citet{vandenburg2025aligning} applied to
-the full J1 output vector; panel calibration \citep{li2026calibrate} when several judges are available;
-\sfsp; \dfsp.\\
+the full J1 output vector; a \emph{nonlinear} calibrator on the same summaries under the same budget
+(a GAM and gradient-boosted trees on $(p_J,t_J,o_J)$ within strata); panel calibration
+\citep{li2026calibrate} when several judges are available; \sfsp; \dfsp. Feature ablations run
+\dfsp{} and the nonlinear calibrator on tie-only $(p_J,t_J)$ and order-only $(p_J,o_J)$ inputs, to
+separate graded-preference information from presentation-order instability. The contribution claim
+needs \dfsp{} to beat the nonlinear calibrator, not just the linear one.\\
 \textbf{Metrics on $\mathcal T$.} Brier score, which equals $R_X$ up to a method-independent constant
 (Lemma~\ref{lem:heldout}); NLL; RPS for graded labels; reliability diagrams and ECE; distance to the
 empirical human distribution on multi-annotator items.\\
@@ -52,18 +62,29 @@ empirical human distribution on multi-annotator items.\\
         null. Nuisance learners are fixed in advance: gradient-boosted trees and a
         generalized additive model on $(p_J,t_J,o_J)$ within strata. Valid inference needs
         $o_P(m^{-1/4})$ nuisance rates. A generic three-dimensional Lipschitz model gives only
-        $m^{-1/5}$, so the test is justified only if the regression function is smoother
-        ($\beta>d/2$) or nearly additive. We state this as an assumption and do not claim it. A
+        $m^{-1/5}$. We therefore state the rate condition directly as an \emph{assumption} (it holds,
+        for example, under H\"older smoothness $\beta>d/2$). It is not implied by approximate
+        additivity, and simulations cannot prove it holds on real data. A
         fitted-score comparison is \emph{not} used as a test: its expectation is
         $G+R(\hmu_s)-R(\hmu_d)$.
-  \item \emph{Calibration of the test.} A synthetic study keeps the real judge outputs of
-        $\mathcal G$ and replaces the human labels with draws from
-        $\operatorname{logit}P(Y=1)=\operatorname{logit}g(p_J,S)+c\,\{t_J-\E(t_J\mid p_J,S)\}$. Here $g$
-        and $\E(t_J\mid p_J,S)$ are fitted on judge outputs only, and the logit link keeps
-        probabilities in $(0,1)$. Taking $c=0$ gives $G=0$. Taking $c\neq0$ gives $G>0$ exactly when
-        $\E\,\mathrm{Var}(t_J\mid p_J,S)>0$, which the feasibility pilot checks; $G$ is computed by
-        Monte Carlo. Size and power of (a) are reported across smooth and rough choices of $g$. If
-        the size is not controlled, the inference in (a) is reported as exploratory.
+  \item \emph{Calibration of the test, with a known population $G$.} A fully specified generator
+        lives inside the feasible polytope:
+        \begin{itemize}
+          \item $S\sim\mathrm{Cat}(\pi)$ and $p\mid S\sim\mathrm{Beta}(a_S,b_S)$;
+          \item $t\mid p,S=2\min(p,1-p)\,U$ with $U\sim\mathrm{Beta}(c_S,e_S)$;
+          \item $o\mid p,t,S=\min\{2\min(p,1-p),1-t\}\,V$ with $V\sim\mathrm{Beta}(f_S,g_S)$;
+          \item $\operatorname{logit}P(Y=1\mid p,t,o,S)=\operatorname{logit}g(p,S)+c\,\{t-m(p,S)\}$,
+                where $m(p,S)=\E(t\mid p,S)$ is known in closed form.
+        \end{itemize}
+        The scalar conditional mean $\bar g_c(p,S)=\E[\sigma(\operatorname{logit}g+c(t-m))\mid p,S]$ is
+        computed by one-dimensional quadrature; it differs from $g$ when $c\neq0$. The population
+        $G=\E\{\sigma(\operatorname{logit}g+c(t-m))-\bar g_c(p,S)\}^2$ is then computable by Monte
+        Carlo. It is $0$ iff $c=0$, since the conditional law of $t$ is nondegenerate. Size and
+        power are reported across smooth and rough $g$ and several $c$, with parameters chosen to
+        mimic the pilot's judge outputs. The same labels simulated on the \emph{real} judge outputs
+        are a complementary diagnostic only. On a finite set of rows with distinct $(p_J,S)$ the
+        empirical $G$ is $0$, so they cannot supply a known positive $G$. If size is not controlled
+        in the generator study, the inference in (a) is reported as exploratory.
   \item \emph{Procedure comparison.} Compare \sfsp{} and \dfsp{} as prediction procedures across $n$,
         on $\mathcal T$. The crossover budget is reported as an empirical finding, not predicted from
         upper bounds.
@@ -72,8 +93,14 @@ A failure to reject in (a) is evidence of low power or small $G$. It is not evid
 
 \subsection{E3: Label acquisition}
 
-Compare random reveal, the baselines of Section~\ref{sec:acquisition}, and the plug-in rule from
-\eqref{eq:design}. All designs select from the pool only and are scored on the same test set
+\emph{E3a (controlled).} Use a synthetic pool with known $q$, $\muH$, $\sigma$ and a discrepancy of
+known, spatially varying local complexity, for example the E2 generator with an added localized
+bump. Compare the plug-in rule with its oracle counterpart (true $q,\sigma,\gamma_1$) and with
+uniform design. This isolates the cost of pilot estimation, including the $\rho$-scale issue of
+Section~\ref{sec:acquisition}.
+
+\emph{E3b (real).} Compare random reveal, the baselines of Section~\ref{sec:acquisition}, and the
+plug-in rule from \eqref{eq:design}. All designs select from the pool only and are scored on the same test set
 $\mathcal T$, so no design can move hard comparisons out of its own evaluation. Diagnostics: the
 estimated maps $\hat\sigma(z)$, $\hat\gamma_1(z)$ and $\hat q(z)$, and where labels were placed.
 

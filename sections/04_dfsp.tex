@@ -124,5 +124,7 @@ decomposition of when \dfsp{} beats \sfsp.
   \item Select $(\hat\theta,\hat h)$ on $\cI_{\mathrm{va}}$ and output
         $\widehat Q_H(\cdot\mid X_i)\leftrightarrow\hmu_{\hat\theta,\hat h}(Z_i)$ for $i\in[N]$.
 \end{enumerate}
-The cost is $N$ judge calls (times $M$ if the judge is elicited by sampling) and $n$ human labels.
+The cost is $2N$ judge calls on the pool under J1 (two presentation orders), or $2MN$ under J2, plus
+the same per-comparison cost on the other splits. The human cost is $n$ pool labels, plus the
+shared development set of Section~\ref{sec:experiments}, which is reported separately.
 Computation is negligible next to judge inference.

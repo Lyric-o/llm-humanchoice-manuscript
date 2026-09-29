@@ -69,7 +69,7 @@
 
 % ---------------------------------------------------------------------------
 \title{Distributional Few-Shot Personalization\\for Human-Anchored LLM Post-Training\\[6pt]
-\large Research proposal --- draft v0.3}
+\large Research proposal --- draft v0.4}
 \author{LLM-humanchoice project}
 \date{28 September 2026}
 
@@ -91,10 +91,13 @@ integrated risk; and (III) post-training of an open-weight policy against the pe
 preference risk. Several short tool results are proved here: a nested-information decomposition
 that defines when the judge distribution adds information beyond its scalar summary, an oracle
 judge-budget bound, and bridges from personalization error to post-training excess risk (including
-a fast rate under quadratic growth). The carrying results are stated as targets: minimax lower
-bounds for bounded preference targets, finite-pool label design, and an end-to-end minimax rate for
-judge-assisted preference optimization. All experiments are retrospective on an existing
-human-labeled dataset, with a common test set held out by prompt.
+a fast rate under quadratic growth). The proposal rests on two things. The first is an empirical
+question, answered with a calibrated test: does a graded, two-order judge distribution carry
+human-relevant information beyond its win probability? The second is a label-acquisition rule
+under the population risk, which improves constants but not rates. Minimax lower bounds for
+bounded preference targets and an end-to-end corollary for post-training are supporting theory,
+stated as targets. All experiments are retrospective on an existing human-labeled dataset, with a
+common test set held out by prompt.
 \end{abstract}
 
 \noindent\textbf{Reading guide.} \emph{Propositions} and \emph{Lemmas} are proved in this draft.

@@ -32,10 +32,12 @@ Minimizing $\int qA\,p^{-2\gamma_2/(2\gamma_2+d)}$ subject to $\int p=1$ gives
   p^{*}(z)\;\propto\;q(z)^{\frac{2\gamma_2+d}{4\gamma_2+d}}\;
   \gamma_1(z)^{\frac{2d}{4\gamma_2+d}}\;\sigma(z)^{\frac{4\gamma_2}{4\gamma_2+d}},
   \qquad
-  R\asymp n^{-\frac{2\gamma_2}{2\gamma_2+d}}
-  \Bigl(\int (qA)^{\frac{2\gamma_2+d}{4\gamma_2+d}}\Bigr)^{\frac{4\gamma_2+d}{2\gamma_2+d}}.
+  \min_p\,n^{-\alpha}J(p)=n^{-\alpha}
+  \Bigl(\int (qA)^{\frac{2\gamma_2+d}{4\gamma_2+d}}\Bigr)^{\frac{4\gamma_2+d}{2\gamma_2+d}},
   \label{eq:design}
 \end{equation}
+where $\alpha=2\gamma_2/(2\gamma_2+d)$ and $J(p)=\int qA\,p^{-\alpha}$. The quantity $n^{-\alpha}J(p)$ is
+a \emph{surrogate upper bound} on the risk under design $p$, not the risk itself.
 The rule combines three factors: where comparisons are \emph{common} ($q$), where humans are
 \emph{split} ($\sigma$), and where the judge-to-human discrepancy \emph{varies} ($\gamma_1$). Setting
 $q$ uniform and letting $d\to0$ recovers the $\sigma$-proportional rule. This is an oracle calculation:
@@ -57,8 +59,12 @@ comparisons occur, not merely where the judge disagrees with humans or is unsure
         $\hat\delta_z(\cdot)=\hat\mu_{\mathrm{pil}}(\cdot)-\omega_{\hat\theta,z}\circ\mJ(\cdot)$ be the estimated
         center-dependent, truncated discrepancy. Define
         $\hat\gamma_1(z)=\max\{\epsilon,\ \max_{z'\in\mathcal N_\rho(z)}\norm{\hat\delta_z(z')-\hat\delta_z(z)}/\norm{z'-z}^{\hat\theta_2}\}$.
-        Here $\mathcal N_\rho(z)$ is a grid on the annulus $\rho/2\le\norm{z'-z}\le\rho$, with
-        $\rho$ equal to the pilot bandwidth, and $\gamma_2$ is fixed at $\hat\theta_2$. We do not
+        Here $\mathcal N_\rho(z)$ is a grid on the annulus $\rho/2\le\norm{z'-z}\le\rho$, and
+        $\gamma_2$ is fixed at $\hat\theta_2$. The scale $\rho$ must satisfy
+        $\norm{\hat\mu_{\mathrm{pil}}-\muH}_\infty=o_P(\rho^{\gamma_2})$. Otherwise the difference
+        quotient is dominated by noise: with $\rho=h_{\mathrm{pil}}\asymp m^{-1/3}$, $d=1$ and
+        $\gamma_2=1$, its variance is of order $1/(mh^3)\asymp1$. If the pilot sup-norm error is
+        $O_P(h_{\mathrm{pil}}^{\gamma_2}\log m)$, then $\rho=h_{\mathrm{pil}}^{1/2}$ suffices. We do not
         claim adaptation to $\gamma_2$.
   \item \emph{Target design.} Estimate $q$ by a kernel density estimate $\hat q$ on the pool, which
         is fully observed. Plug $\hat q,\hat\gamma_1,\hat\sigma$ into \eqref{eq:design} to get
@@ -66,6 +72,13 @@ comparisons occur, not merely where the judge disagrees with humans or is unsure
         $\tilde p\ge\eta\hat q$, i.e.\ overlap with the pool.
   \item \emph{Pool sampling.} Draw the remaining $n-n_0$ labels from the pool without replacement,
         with probabilities proportional to $\tilde p(Z_i)/\hat q(Z_i)$.
+  \item \emph{Local bandwidth.} Fit \dfsp{} with the plug-in local bandwidth
+        \[
+          \hat h(z)=\min\Bigl\{\Bigl(\frac{\hat\sigma(z)}{\hat\gamma_1(z)}\Bigr)^{\frac{2}{2\gamma_2+d}}
+          \{n\tilde p(z)\}^{-\frac{1}{2\gamma_2+d}},\,1\Bigr\},
+        \]
+        floored so that $n\tilde p(z)\hat h(z)^d\ge C\log n$. This is the pointwise optimizer of the
+        surrogate.
 \end{enumerate}
 The validation set comes from the uniform pilot, so the adaptation step of Section~\ref{sec:dfsp}
 needs no importance weighting.
@@ -88,13 +101,27 @@ Let $J(p)=\int qA\,p^{-\alpha}$ with $\alpha=2\gamma_2/(2\gamma_2+d)$. Assume:
         without replacement can realize $\tilde p$ up to constants;
   \item the pool covers every window, $Nh^dc_q\gg\log N$.
 \end{itemize}
-Then \dfsp{} with a locally adaptive bandwidth under the design $\tilde p$ satisfies the upper bound
+Let $E_\epsilon$ be the event on which three things hold:
+\begin{itemize}
+  \item $\norm{\hat q\hat A/(qA)-1}_\infty\le\epsilon$;
+  \item $\hat\sigma/\sigma$ and $\hat\gamma_1/\gamma_1$ lie in $[\tfrac12,2]$;
+  \item every bandwidth window contains $\gtrsim n\tilde p\hat h^d$ revealed points.
+\end{itemize}
+Let $\epsilon_{\mathrm{pool}}=\sup_z|\text{realized design density}/\tilde p-1|$ be the
+without-replacement approximation error. Then \dfsp{} with the plug-in local bandwidth satisfies
 \[
-  R\;\lesssim\;\{(1-c_0)n\}^{-\alpha}\,(1-\eta)^{-\alpha}\,J(p^{*})\;+\;\text{pilot and log terms}.
+  R\;\lesssim\;\{(1-c_0)n\}^{-\alpha}\,(1-\eta)^{-\alpha}\,\frac{1+\epsilon}{1-\epsilon}\,
+  (1-\epsilon_{\mathrm{pool}})^{-\alpha}\,J(p^{*})\;+\;\Pr(E_\epsilon^{c}).
 \]
-Here $c_0$ is the pilot fraction, and $(1-\eta)^{-\alpha}$ is the price of the defensive mixture, since
-$\tilde p\ge(1-\eta)p^{*}$ gives $J(\tilde p)\le(1-\eta)^{-\alpha}J(p^{*})$.
+For binary labels the risk is at most $1$, which is why $\Pr(E_\epsilon^c)$ enters additively.
 \end{target}
+
+Two exact inequalities drive the displayed factors. First, $\tilde p\ge(1-\eta)\hat p$ gives
+$J(\tilde p)\le(1-\eta)^{-\alpha}J(\hat p)$. Second, $\hat p$ minimizes the estimated surrogate
+$\hat J$, and $\hat J\in[(1-\epsilon)J,(1+\epsilon)J]$ on $E_\epsilon$, so
+$J(\hat p)\le\frac{1+\epsilon}{1-\epsilon}J(p^{*})$. The pool factor follows in the same way from a
+realized density $\ge(1-\epsilon_{\mathrm{pool}})\tilde p$. What remains open is a rate for
+$\Pr(E_\epsilon^c)$, which requires sup-norm consistency of $\hat\gamma_1$ at the scale $\rho$ above.
 
 The corresponding uniform-design bound replaces $J(p^{*})$ by $J(q)$. The comparison
 $J(p^{*})<J(q)$ is a statement about \emph{upper bounds}. It holds strictly iff
