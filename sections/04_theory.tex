@@ -1,0 +1,45 @@
+\section{Theoretical goals}
+\label{sec:theory}
+
+The theory adapts \citet{li2026personalizing} to bounded preference probabilities and to a
+localization variable built from the judge distribution.
+
+\paragraph{Assumptions.}
+\begin{enumerate}[label=(\roman*)]
+  \item $p_H$ is H\"older with parameters $(\theta_1^{*},\theta_2^{*})$.
+  \item Preferences are nondegenerate: $p_H\in[\kappa,1-\kappa]$.
+  \item Labeled points have a density bounded above and below on a regular subset of $\cZ$.
+  \item The bandwidth satisfies $nh^d\gtrsim\log n$.
+\end{enumerate}
+We say the discrepancy has complexity $\gamma=(\gamma_1,\gamma_2)$ if, after smoothing, it is
+H\"older with constant $\gamma_1$ and exponent $\gamma_2$.
+
+\begin{target}[Upper bound]
+For fixed $\theta$ and a suitable bandwidth $h$,
+\[
+  R(\hat p_{\theta,h})\;\lesssim\;\gamma_1^{\frac{2d}{2\gamma_2+d}}\,
+  n^{-\frac{2\gamma_2}{2\gamma_2+d}}+\frac1n .
+\]
+\end{target}
+
+\begin{target}[Lower bound]
+Take a fixed judge that lies strictly inside the probability range and strictly inside the
+smoothness class of $p_H$, and suppose $\theta_2^{*}\le\gamma_2\le1$. Then the rate of Target~A
+cannot be improved by any estimator and any labeling design, including sequential designs.
+\end{target}
+
+\begin{target}[Adaptation and no harm]
+With $(\hat\theta,\hat h)$ chosen by validation,
+\[
+  R(\hat p_{\hat\theta,\hat h})\le C\min_{\theta,h}R(\hat p_{\theta,h})+O\{(\log n)^2/n\}.
+\]
+In particular, \dfsp{} is never much worse than the human-only estimator.
+\end{target}
+
+\paragraph{Consequences.}
+A good judge has a discrepancy with small $\gamma_1$ or large $\gamma_2$, so it lowers the number of
+human labels needed. Combining Targets~A--B with Proposition~\ref{prop:bridge} gives a post-training
+statement: under realizability, the policy's excess preference risk decays at the same rate. That
+rate is governed by the complexity of the judge-to-human discrepancy, not by the complexity of
+human preference itself. For the design of Section~\ref{sec:acquisition}, we aim to show that the
+plug-in rule attains the risk bound of the oracle design up to the cost of the pilot sample.

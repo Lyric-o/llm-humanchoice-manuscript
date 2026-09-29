@@ -1,0 +1,35 @@
+\section{Setup}
+\label{sec:setup}
+
+\paragraph{Data.}
+We use an existing dataset of pairwise comparisons $X=(x,y_A,y_B)$ with binary human labels
+$Y\in\{0,1\}$, where $Y=1$ means $A$ is preferred. The judge is run on all comparisons. During
+training only $n$ human labels are revealed. A held-out test set, split by prompt, is used for
+evaluation. No new human annotation is collected.
+
+\paragraph{Judge protocol.}
+A binary verdict carries no information beyond its win probability $p_J$, so we elicit a graded
+distribution instead. The judge chooses among five labels, $\{A\gg B,\ A>B,\ \text{tie},\ B>A,\
+B\gg A\}$. We read the label probabilities from its output logits, once with $A$ shown first
+($\QJ^{AB}$) and once with the order reversed ($\QJ^{BA}$). Let
+$w(Q)=Q(A\gg B)+Q(A>B)+\tfrac12Q(\text{tie})$. We summarize each comparison by three quantities:
+\[
+  p_J=\tfrac12\{w(\QJ^{AB})+w(\QJ^{BA})\},\qquad
+  t_J=\tfrac12\{\QJ^{AB}(\text{tie})+\QJ^{BA}(\text{tie})\},\qquad
+  o_J=|w(\QJ^{AB})-w(\QJ^{BA})| .
+\]
+These are the win probability, the tie mass and the order inconsistency. The last two are not
+functions of $p_J$.
+
+\paragraph{Target.}
+Let $Z=(p_J,t_J,o_J)\in\cZ$, a fixed polytope in $[0,1]^3$. When content categories are available,
+$Z$ is used within each category. The target is the human preference probability
+\[
+  p_H(z)=P(Y=1\mid Z=z),
+\]
+and an estimator $\hat p$ is evaluated by
+\[
+  R(\hat p)=\E\{\hat p(Z)-p_H(Z)\}^2 .
+\]
+On held-out comparisons with one label each, the Brier score equals $R(\hat p)$ plus a constant
+that does not depend on the method. Methods can therefore be compared directly.

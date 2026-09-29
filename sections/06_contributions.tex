@@ -1,0 +1,17 @@
+\section{Expected contributions}
+\label{sec:contributions}
+
+\begin{enumerate}
+  \item \textbf{Method.} \dfsp{} corrects a distribution-valued LLM judge toward human preferences
+        with few labels. It is adaptive: it uses the judge when the judge helps and falls back to
+        human-only estimation when it does not.
+  \item \textbf{Label design.} A rule for which comparisons to send to humans, targeting regions
+        where humans disagree and the judge's error varies.
+  \item \textbf{Post-training.} A pipeline from few human labels to a post-trained policy, with a
+        bound linking estimation error to the policy's excess preference risk, and experiments
+        measuring policy quality against the human-label budget.
+\end{enumerate}
+
+\noindent The main hypothesis can also fail in informative ways. If the graded judge distribution
+adds nothing beyond $p_J$ ($G=0$), \dfsp{} should reduce to scalar FSP. If the judge is misleading,
+\dfsp{} should revert to human-only estimation. Both outcomes will be reported.

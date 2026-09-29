@@ -1,6 +1,6 @@
 # Distributional Few-Shot Personalization for Human-Anchored LLM Post-Training
 
-Manuscript repository for the LLM-humanchoice project. It currently holds **research proposal draft v0.1** (2026-09-28). The repository is meant to be linked to Overleaf through GitHub.
+Manuscript repository for the LLM-humanchoice project. It currently holds the **research proposal** (concise version, 2026-09-29). The repository is meant to be linked to Overleaf through GitHub.
 
 **Idea.** Treat a probabilistic LLM judge as a *distribution-valued* black-box predictor and personalize it to humans with a few revealed labels. This extends the few-shot personalization (FSP) framework of Li & Zhang (arXiv:2601.01432) from scalar regression to conditional preference distributions. The personalized target then drives preference optimization of an open-weight policy, with a bound that carries the personalization error into the policy's excess risk.
 
@@ -14,19 +14,14 @@ Manuscript repository for the LLM-humanchoice project. It currently holds **rese
 
 | Path | Role |
 |---|---|
-| `main.tex` | Title, abstract, macros, theorem environments, section order |
-| `sections/01_motivation.tex` | Problem, statistical template (Li & Zhang), RQ1–RQ3 |
-| `sections/02_positioning.tex` | Closest prior work (table), claimed gap, claims not made |
-| `sections/03_setup.tex` | Data, embeddings, link $T$, localization variable $Z$ (design decision D1) |
-| `sections/04_dfsp.tex` | Method I: vector-valued local smoothing, D-FSP estimator, adaptation, two channels |
-| `sections/05_theory.tex` | Risks; Prop. 1 (scalar vs distributional); Prop. 2 (judge budget); Targets A–C |
-| `sections/06_acquisition.tex` | Method II: design rule from local discrepancy complexity; Target D |
-| `sections/07_post_training.tex` | Method III: FSP-PO; Props. 3–4 (bridge); Target E; design decision D2 |
-| `sections/08_experiments.tex` | E0–E6, arms, metrics, decision gates G1–G3 |
-| `sections/09_risks.tex` | Hypothesis, risk register, contributions, titles |
-| `references.bib` | Bibliography (2025–26 entries checked against arXiv on 2026-09-28) |
-
-**Status legend in the PDF.** *Propositions/Lemmas* are proved in the draft. *Target results* are claims still to be established. Red `TODO` markers are open decisions (dataset, judge models, policy model).
+| `main.tex` | Title, abstract, macros, section order |
+| `sections/01_introduction.tex` | Problem, starting point (Li & Zhang), the three parts, related work |
+| `sections/02_setup.tex` | Data, graded two-order judge protocol, summaries (p_J, t_J, o_J), target and risk |
+| `sections/03_methods.tex` | Method I (D-FSP), Method II (label acquisition), Method III (FSP-PO) and the bridge proposition |
+| `sections/04_theory.tex` | Assumptions and target results (upper bound, lower bound, adaptation) |
+| `sections/05_experiments.tex` | E1–E5: estimation, information test, acquisition, robustness, post-training |
+| `sections/06_contributions.tex` | Expected contributions |
+| `references.bib` | Bibliography |
 
 ## Local build
 

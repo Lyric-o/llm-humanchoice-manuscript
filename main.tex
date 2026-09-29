@@ -1,14 +1,11 @@
 \documentclass[11pt]{article}
 
-% ---------------------------------------------------------------------------
-% Packages (kept to a set that compiles on Overleaf and on TeX Live 2020)
-% ---------------------------------------------------------------------------
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,amsthm,mathtools,bm}
-\usepackage{booktabs,tabularx,array}
+\usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage[dvipsnames]{xcolor}
 \usepackage{microtype}
@@ -17,105 +14,57 @@
 
 \setlist{itemsep=2pt,topsep=4pt}
 
-% ---------------------------------------------------------------------------
-% Theorem-like environments
-%   Proposition / Lemma : proved in this draft (short proofs included)
-%   Target result       : statement we aim to establish; not yet proved
-% ---------------------------------------------------------------------------
 \theoremstyle{plain}
 \newtheorem{proposition}{Proposition}
-\newtheorem{lemma}{Lemma}
 \newtheorem{target}{Target result}
 \renewcommand{\thetarget}{\Alph{target}}
-\theoremstyle{definition}
-\newtheorem{definition}{Definition}
-\newtheorem{assumption}{Assumption}
-\theoremstyle{remark}
-\newtheorem{remark}{Remark}
 
-% ---------------------------------------------------------------------------
-% Macros
-% ---------------------------------------------------------------------------
 \newcommand{\E}{\mathbb{E}}
 \newcommand{\R}{\mathbb{R}}
-\newcommand{\cH}{\mathcal{H}}
-\newcommand{\cM}{\mathcal{M}}
 \newcommand{\cZ}{\mathcal{Z}}
-\newcommand{\cS}{\mathcal{S}}
 \newcommand{\cI}{\mathcal{I}}
-\newcommand{\cD}{\mathcal{D}}
 \newcommand{\QJ}{Q_J}
-\newcommand{\QH}{Q_H}
-\newcommand{\muH}{\mu_H^{*}}
-\newcommand{\mJ}{m_J}
-\newcommand{\hmu}{\widehat\mu}
-\newcommand{\Dhat}{\widehat\Delta}
-\newcommand{\ind}{\mathbf{1}}
 \newcommand{\norm}[1]{\lVert #1 \rVert}
+\newcommand{\ind}{\mathbf{1}}
 \DeclareMathOperator*{\argmin}{arg\,min}
-\DeclareMathOperator{\Ber}{Bernoulli}
-\DeclareMathOperator{\KL}{KL}
-\DeclareMathOperator{\tr}{tr}
-\DeclareMathOperator{\Cov}{Cov}
 \newcommand{\dfsp}{\textnormal{D-FSP}}
 \newcommand{\sfsp}{\textnormal{S-FSP}}
 \newcommand{\fsppo}{\textnormal{FSP-PO}}
-\newcommand{\todo}[1]{\textcolor{BrickRed}{[\textbf{TODO:} #1]}}
 
-\definecolor{boxbg}{RGB}{242,246,252}
-\definecolor{boxrule}{RGB}{60,90,150}
-\newcommand{\keybox}[1]{\par\medskip\noindent\fcolorbox{boxrule}{boxbg}{%
-  \parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{#1}}\par\medskip}
-
-% ---------------------------------------------------------------------------
 \title{Distributional Few-Shot Personalization\\for Human-Anchored LLM Post-Training\\[6pt]
-\large Research proposal --- draft v0.4}
+\large Research proposal}
 \author{LLM-humanchoice project}
-\date{28 September 2026}
+\date{September 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-LLM judges are cheap, and under repeated sampling, logit elicitation or a structured rating
-protocol they produce a \emph{distribution} over preference outcomes rather than a single winner.
-That distribution is not the human preference distribution that post-training should target, and
-human labels are scarce. We propose to treat the judge as a distribution-valued black-box predictor
-and to \emph{personalize} it to humans with a few labels, extending the few-shot personalization
-(FSP) framework of \citet{li2026personalizing} from scalar nonparametric regression to conditional
-preference distributions. The proposal has three linked components: (I) a distributional FSP
-estimator (\dfsp) that corrects the judge through a locally smoothed discrepancy and contains the
-human-only estimator as a special case; (II) a label-acquisition rule derived from the estimator's
-integrated risk; and (III) post-training of an open-weight policy against the personalized target
-(\fsppo), with bounds that propagate the personalization error into the policy's excess
-preference risk. Several short tool results are proved here: a nested-information decomposition
-that defines when the judge distribution adds information beyond its scalar summary, an oracle
-judge-budget bound, and bridges from personalization error to post-training excess risk (including
-a fast rate under quadratic growth). The proposal rests on two things. The first is an empirical
-question, answered with a calibrated test: does a graded, two-order judge distribution carry
-human-relevant information beyond its win probability? The second is a label-acquisition rule
-under the population risk, which improves constants but not rates. Minimax lower bounds for
-bounded preference targets and an end-to-end corollary for post-training are supporting theory,
-stated as targets. All experiments are retrospective on an existing human-labeled dataset, with a
-common test set held out by prompt.
+LLM judges are cheap and can report a full distribution over preference outcomes, but they do not
+agree with human raters, and human labels are expensive. We propose to treat the judge as a
+distribution-valued black-box predictor and to correct it toward human preferences using only a
+few human labels. The approach builds on the few-shot personalization framework of
+\citet{li2026personalizing}. The project has three parts:
+\begin{itemize}
+  \item \emph{Distributional few-shot personalization} (\dfsp): the judge's win probability serves as
+        an offset, and a kernel estimate of the judge-to-human discrepancy, localized on summaries
+        of the judge distribution, corrects it.
+  \item \emph{A label-acquisition rule} that decides which comparisons humans should label.
+  \item \emph{Post-training (\fsppo)}: the corrected human preference probabilities serve as soft
+        targets for DPO-style training of an open-weight model.
+\end{itemize}
+We aim to show three things: when the judge distribution carries information beyond its win
+probability, how few human labels are needed, and how the estimation error carries over to the
+post-trained policy. All experiments reuse an existing human-labeled dataset, revealing only a
+small fraction of its labels.
 \end{abstract}
 
-\noindent\textbf{Reading guide.} \emph{Propositions} and \emph{Lemmas} are proved in this draft.
-\emph{Target results} are statements we intend to establish; they are not yet proved.
-\textcolor{BrickRed}{Red} markers are open decisions.
-
-\tableofcontents
-\newpage
-
-\input{sections/01_motivation}
-\input{sections/02_positioning}
-\input{sections/03_setup}
-\input{sections/04_dfsp}
-\input{sections/05_theory}
-\input{sections/06_acquisition}
-\input{sections/07_post_training}
-\input{sections/08_experiments}
-\input{sections/09_risks}
+\input{sections/01_introduction}
+\input{sections/02_setup}
+\input{sections/03_methods}
+\input{sections/04_theory}
+\input{sections/05_experiments}
+\input{sections/06_contributions}
 
 \bibliographystyle{plainnat}
 \bibliography{references}

@@ -1,0 +1,122 @@
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Method I: Distributional few-shot personalization (\dfsp)}
+\label{sec:dfsp}
+
+\paragraph{Decomposition.}
+We write the human target as the judge's prediction plus a discrepancy,
+\[
+  p_H(z)=p_J(z)+\delta(z).
+\]
+Here $p_J(z)$ is the first coordinate of $z$. If the judge is informative, $\delta$ is simpler than
+$p_H$: it is smaller, or smoother, or both. It can then be estimated from far fewer labels than
+$p_H$ itself.
+
+\paragraph{Local smoothing.}
+Following \citet{li2026personalizing}, for $\theta=(\theta_1,\theta_2)$ with $\theta_1\ge0$ and
+$0<\theta_2\le1$, and a center $z$, define the truncated offset
+\[
+  \omega_{\theta,z}(z')=p_J(z)+\min\bigl\{|p_J(z')-p_J(z)|,\ \theta_1\norm{z'-z}^{\theta_2}\bigr\}\,
+  \operatorname{sgn}\{p_J(z')-p_J(z)\}.
+\]
+This operation limits how much the offset may vary around $z$, and $\theta$ acts as a borrowing
+dial. When $\theta_1=0$, $\omega_{\theta,z}\equiv p_J(z)$, and the estimator below reduces to a purely
+human kernel estimate. When $\theta_1$ is large, the full offset is used.
+
+\paragraph{Estimator.}
+Let $\cI_n$ index the revealed labels and let $K_h(z',z)=\ind\{\norm{z'-z}_\infty\le h\}$. Define
+\[
+  \hat\delta_{\theta,h}(z)=\frac{\sum_{i\in\cI_n}K_h(Z_i,z)\{Y_i-\omega_{\theta,z}(Z_i)\}}
+                                 {1\vee\sum_{i\in\cI_n}K_h(Z_i,z)},
+  \qquad
+  \hat p_{\theta,h}(z)=\Pi_{[0,1]}\{p_J(z)+\hat\delta_{\theta,h}(z)\},
+\]
+where $\Pi_{[0,1]}$ clips to $[0,1]$. The pair $(\theta,h)$ is chosen from a grid by validation
+Brier score on a held-out part of the revealed labels. Because the grid contains $\theta_1=0$, a
+judge that does not help is automatically switched off.
+
+\paragraph{Scalar versus distributional localization.}
+Scalar FSP (\sfsp) localizes on $p_J$ alone. \dfsp{} localizes on $Z=(p_J,t_J,o_J)$. The two
+procedures target different quantities, $\E(Y\mid p_J)$ and $\E(Y\mid Z)$. The comparison between
+them decomposes exactly as
+\[
+  R_X(\hat p_{\mathrm S})-R_X(\hat p_{\mathrm D})
+  =G-\{R(\hat p_{\mathrm D})-R(\hat p_{\mathrm S})\},
+  \qquad
+  G=\E\{\E(Y\mid Z)-\E(Y\mid p_J)\}^2 .
+\]
+Here $R_X$ is the error against the per-comparison probability $P(Y=1\mid X)$. Each $R(\cdot)$ is
+measured against its own target, so the braced term is the extra estimation cost of localizing in
+three dimensions instead of one. The judge distribution helps exactly when its information gain
+$G$ exceeds that extra cost. $G$ is a variable-importance quantity
+\citep{williamson2021nonparametric,williamson2023general}, and we test it directly
+(Section~\ref{sec:experiments}).
+
+\subsection{Method II: Choosing which comparisons to label}
+\label{sec:acquisition}
+
+We choose the $n$ comparisons to label from the judged pool. Let $q$ be the density of $Z$ in the
+pool, $\sigma^2(z)=p_H(z)\{1-p_H(z)\}$ the human label noise, and $\gamma_1(z)$ the local
+H\"older constant of the discrepancy $\delta$. Suppose labels are drawn with density $p$ and the
+kernel uses a locally chosen bandwidth. Minimizing the resulting bias--variance upper bound on the
+risk over $p$ gives the design
+\[
+  p^{*}(z)\;\propto\;q(z)^{\frac{2\gamma_2+d}{4\gamma_2+d}}\;
+  \gamma_1(z)^{\frac{2d}{4\gamma_2+d}}\;\sigma(z)^{\frac{4\gamma_2}{4\gamma_2+d}} .
+\]
+In words, label comparisons that are \emph{common}, on which \emph{humans are split}, and where
+the judge-to-human discrepancy \emph{varies}. A constant bias of the judge is cheap to learn
+however large it is. Labels should not simply go where the judge is unsure.
+
+In practice we proceed as follows:
+\begin{enumerate}
+  \item Reveal a small uniform pilot sample.
+  \item Fit \dfsp{} on the pilot sample.
+  \item Estimate $\sigma$ from the pilot fit.
+  \item Estimate $\gamma_1$ from local differences of the fitted discrepancy, at a scale larger than
+        the pilot bandwidth.
+  \item Plug the estimates into $p^{*}$, mix the result with $q$ for robustness, and sample the
+        remaining labels from the pool accordingly.
+\end{enumerate}
+For H\"older classes no design can improve the minimax \emph{rate} \citep{castro2005faster}. The
+goal of this rule is a better constant, that is, fewer labels for the same accuracy.
+
+\subsection{Method III: Post-training against the personalized target (\fsppo)}
+\label{sec:post-training}
+
+Let $\pi_{\mathrm{ref}}$ be the initial model and $\pi_\vartheta$ the model being trained. Following
+DPO \citep{rafailov2023dpo}, define
+\[
+  d_\vartheta(X)=\beta\Bigl[\log\frac{\pi_\vartheta(y_A\mid x)}{\pi_{\mathrm{ref}}(y_A\mid x)}
+  -\log\frac{\pi_\vartheta(y_B\mid x)}{\pi_{\mathrm{ref}}(y_B\mid x)}\Bigr].
+\]
+We train on all judged pairs with the soft-label objective
+\[
+  \widehat R(\vartheta;\hat p)=-\frac1N\sum_{i=1}^{N}
+  \Bigl[\hat p_i\log\sigma\{d_\vartheta(X_i)\}+(1-\hat p_i)\log\sigma\{-d_\vartheta(X_i)\}\Bigr],
+\]
+where $\hat p_i=\hat p(Z_i)$ comes from \dfsp. The loss itself is standard
+\citep{lee2024rlaif,furuta2024gapo}. What is new is the target $\hat p$ and the guarantee it carries.
+
+Let $R(\vartheta;p)$ denote the population version of this objective, and let $p_X=P(Y=1\mid X)$.
+
+\begin{proposition}[From estimation error to post-training error]
+\label{prop:bridge}
+Suppose $|d_\vartheta|\le D$, and $\hat\vartheta$ minimizes $R(\cdot;\hat p)$ up to an error
+$\varepsilon$ (optimization plus generalization). Then
+\[
+  R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\;\le\;\varepsilon+2D\,R_X(\hat p)^{1/2}.
+\]
+Suppose in addition the class $\{d_\vartheta\}$ is convex. Then the bound improves to
+$2\varepsilon+2R_X(\hat p)/c_D$, where $c_D=\sigma(D)\{1-\sigma(D)\}$.
+\end{proposition}
+
+\noindent\emph{Proof idea.} The objective is linear in the target:
+$\ell(d;p)-\ell(d;p')=-(p-p')\,d$. Replacing $p_X$ by $\hat p$ therefore shifts every candidate's
+risk by at most $D\,\E|\hat p-p_X|$, which gives the first bound. For a convex class, the logistic
+loss grows quadratically around its minimizer, which gives the second.
+
+The proposition turns the human-label cost of estimating $p_H$ into a bound on the policy's excess
+preference risk. $R_X$ includes the part of human preference not explained by $Z$, which no
+amount of human labels removes.
