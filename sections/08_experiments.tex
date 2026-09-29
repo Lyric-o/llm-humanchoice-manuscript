@@ -42,8 +42,7 @@ human-subject data are collected.
 \textbf{Methods.} Human-only (kernel on $Z_d$; logistic regression on $Z_d$); raw judge $\mJ$; scalar
 recalibration of $p_J$ (Platt, isotonic); the linear map of \citet{vandenburg2025aligning} applied to
 the full J1 output vector; a \emph{nonlinear} calibrator on the same summaries under the same budget
-(a GAM and gradient-boosted trees on $(p_J,t_J,o_J)$ within strata); panel calibration
-\citep{li2026calibrate} when several judges are available; \sfsp; \dfsp. Feature ablations run
+(a GAM and gradient-boosted trees on $(p_J,t_J,o_J)$ within strata); \sfsp; \dfsp. Feature ablations run
 \dfsp{} and the nonlinear calibrator on tie-only $(p_J,t_J)$ and order-only $(p_J,o_J)$ inputs, to
 separate graded-preference information from presentation-order instability. The contribution claim
 needs \dfsp{} to beat the nonlinear calibrator, not just the linear one.\\

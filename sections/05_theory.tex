@@ -57,9 +57,7 @@ $\E\norm{\mu_s^{*}(Z_s)-\mu_X}^2=\E\norm{\mu_d^{*}(Z_d)-\mu_X}^2+G$. Subtract th
 \begin{remark}[Status and use]
 The identity is standard conditional-expectation orthogonality. For binary labels, $G$ is the
 numerator of the nonparametric variable-importance measure of the extra judge features, in the
-sense of \citet{williamson2021nonparametric,williamson2023general}. The corresponding monotonicity
-of oracle-calibrated Brier risk for nested judge panels is Proposition~1 of \citet{li2026calibrate}.
-We claim no novelty for it. Its role here is operational. First, it names the estimand, $G$, that
+sense of \citet{williamson2021nonparametric,williamson2023general}. We claim no novelty for it. Its role here is operational. First, it names the estimand, $G$, that
 decides whether the distributional channel carries information. Second, it shows that comparing
 two \emph{fitted} predictors estimates $G+R(\hmu_s)-R(\hmu_d)$, not $G$. Testing $G=0$ therefore needs
 variable-importance inference (experiment E2), not a comparison of fitted scores. Rate upper bounds

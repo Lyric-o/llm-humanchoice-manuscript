@@ -54,10 +54,8 @@ Scalar predictor as the offset; no graded judge outputs; Lebesgue-risk design; n
 \label{tab:positioning}
 \end{table}
 
-Two recent works are also relevant to individual components. \citet{li2026calibrate} calibrates
-full panels of noisy judges with proper scoring rules; this is a natural calibration baseline for
-Method~I. \citet{lail2026decomposing} targets expert labels using the epistemic part of judge
-uncertainty; this is a baseline for Method~II.
+\citet{lail2026decomposing} is also relevant to one component: it targets expert labels using the
+epistemic part of judge uncertainty, which makes it a baseline for Method~II.
 
 \keybox{\textbf{Claimed gap.} Few-shot personalization of a \emph{graded, two-order,
 distribution-valued} black-box judge, carried through to post-training, with three parts:
@@ -80,8 +78,7 @@ strength-aware preference optimization \citep{imai2026mixdpo}, active selection 
 labeling \citep{shen2025active,xu2025rlthf}, or mapping judge outputs to human labels
 \citep{vandenburg2025aligning}. The nested-information identity of
 Proposition~\ref{prop:scalar-vs-dist} is standard: its $G$ is a variable-importance numerator
-\citep{williamson2021nonparametric,williamson2023general}, and the panel version is Proposition~1 of
-\citet{li2026calibrate}. The bridge propositions of Section~\ref{sec:post-training} are standard
+\citep{williamson2021nonparametric,williamson2023general}. The bridge propositions of Section~\ref{sec:post-training} are standard
 target-perturbation and strong-convexity arguments. Our contribution is where the preference target
 comes from, the minimax and design theory for it, and what guarantees it carries through to the
 policy.
