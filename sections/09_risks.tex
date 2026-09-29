@@ -25,13 +25,17 @@ adaptive borrowing should revert to human-only estimation (E4). Both outcomes ar
 Risk & Mitigation \\
 \midrule
 Theory looks like a coordinatewise corollary of \citet{li2026personalizing} &
-Rest the paper on Targets~\ref{tr:lower}, \ref{tr:design} and~\ref{tr:e2e}; present the
-propositions as tools (Remark~\ref{rem:novelty-theory}). \\
+Rest the paper on the E2 finding and the acquisition result (Target~\ref{tr:design}); present
+Targets~\ref{tr:lower} and~\ref{tr:e2e} and the propositions as supporting theory
+(Remark~\ref{rem:novelty-theory}). \\
 The judge protocol adds nothing beyond $p_J$ ($G=0$) &
 Graded, two-order protocol J1; test $G$ with calibrated variable-importance inference (E2); gate G1. \\
 Targets stated without necessary conditions &
-Round-1 counterexamples are recorded next to Targets~\ref{tr:upper} and~\ref{tr:lower}; keep
-nondegeneracy, occupancy and slack conditions explicit. \\
+Review counterexamples are recorded next to Targets~\ref{tr:upper} and~\ref{tr:lower}; keep the
+nondegeneracy, occupancy, support, compatibility and slack conditions explicit. \\
+Diagnostic or test labels leak into budgeted procedures &
+Separate diagnostic ($\mathcal G$), development ($\mathcal V$) and test ($\mathcal T$) splits; freeze
+procedures after the label-free feasibility pilot. \\
 Curse of dimensionality in $Z$ &
 Localize on low-dimensional judge summaries ($d\le4$); these are natural covariates (Design D1). \\
 Judge support differs from the human label space &
@@ -60,12 +64,13 @@ distribution-valued targets with a post-training bridge. \\
         two-order judge distribution with an estimator that adaptively borrows from a frozen judge
         using a few human labels, together with a calibrated test of whether the distribution adds
         information beyond $p_J$.
-  \item \emph{Statistical optimality under scarce human feedback.} Minimax lower bounds for bounded
-        preference targets with a fixed judge, and a finite-pool label design under the population
-        risk, driven by pool density, human variability and local discrepancy complexity.
-  \item \emph{End-to-end post-training.} An end-to-end minimax rate for judge-assisted preference
-        optimization (Target~\ref{tr:e2e}), and real checkpoints trained against the personalized
-        target, with policy quality reported as a function of the human-label budget.
+  \item \emph{Label design under the population risk.} A finite-pool acquisition rule driven by pool
+        density, human variability and local discrepancy complexity, with a conditional
+        upper-bound guarantee. It improves constants, not rates.
+  \item \emph{Post-training evidence and supporting theory.} Real checkpoints trained against the
+        personalized target, with policy quality reported against the human-label budget. The
+        supporting theory covers bounded-target minimax lower bounds with a fixed judge, the bridges,
+        and their end-to-end corollary.
 \end{enumerate}
 
 \subsection{Working titles and message}

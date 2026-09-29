@@ -92,8 +92,10 @@ constant $c_D\approx e^{-D}$ degrades quickly as $D$ grows.
 \begin{proposition}[Realizable case]
 \label{prop:bridge-fast}
 Suppose $p_X,\hat p\in[\kappa,1-\kappa]$. For $\hat p$ this can be enforced by projection, which
-does not increase the error. Suppose also that every $p:\{\text{pool pairs}\}\to[\kappa,1-\kappa]$ is
-realized by some $\vartheta$, i.e.\ $\sigma(d_\vartheta)=p$ almost surely, with $D\ge\operatorname{logit}(1-\kappa)$.
+does not increase the error. Suppose also that every measurable $p:\operatorname{supp}(P_X)\to[\kappa,1-\kappa]$ in
+the relevant class is realized by some $\vartheta$, i.e.\ $\sigma(d_\vartheta)=p$ $P_X$-almost surely,
+with $D\ge\operatorname{logit}(1-\kappa)$. This is a condition on the \emph{population}, not on the
+finite pool.
 If $\hat\vartheta$ minimizes $R(\cdot;\hat p)$ exactly, then
 \[
   R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)=\E\,\KL\bigl(\Ber(p_X)\,\|\,\Ber(\hat p)\bigr)
@@ -112,7 +114,9 @@ $d(A,B)+d(B,C)+d(C,A)=0$. So if a prompt's comparisons contain a cycle, not ever
 probabilities can be realized; three cyclic probabilities of $0.75$ cannot. If each prompt's
 comparison graph is a \emph{forest} (for example, one pair per prompt, as in most pairwise datasets),
 any assignment of pairwise probabilities is consistent with some utility function. The assumption
-then reduces to the richness of the policy class. We will check the forest condition on the dataset.
+then reduces to the richness of the policy class. The forest condition is an assumption on the
+population comparison design, meaning the support of $P_X$ given each prompt. Checking it on the pool
+(E0) is a sanity check, not a proof.
 
 \keybox{\textbf{Chain.} $n$ human labels
 $\xrightarrow{\ \text{Targets \ref{tr:upper}, \ref{tr:oracle}}\ }$
@@ -122,37 +126,49 @@ excess preference risk $\lesssim\varepsilon+\sqrt{r_n+B_\zeta}$ (bounded scorer)
 $\lesssim\varepsilon+r_n+B_\zeta$ (quadratic growth or realizable).
 The coarsening gap $B_\zeta$ does not vanish with more human labels.}
 
-\subsection{The carrying theorem}
+\subsection{End-to-end corollary}
 
-\begin{target}[End-to-end minimax rate for judge-assisted preference optimization]
+\begin{target}[End-to-end minimax rate; a corollary of Target~\ref{tr:lower} and the bridge]
 \label{tr:e2e}
 Consider binary labels under the following assumptions:
 \begin{itemize}
   \item $Z$-sufficiency: $p_X=p_H^{*}(Z)$, so $B_\zeta=0$;
-  \item each prompt's comparison graph is a forest;
-  \item the policy class realizes every utility assignment with $|d|\le D$, where
-        $D\ge\operatorname{logit}(1-\kappa)$;
-  \item the judge is fixed and has interior slack, as in Target~\ref{tr:lower};
+  \item the population comparison design is a forest at each prompt;
+  \item the policy class realizes every utility assignment on $\operatorname{supp}(P_X)$ with
+        $|d|\le D$, where $D\ge\operatorname{logit}(1-\kappa)$;
+  \item the judge satisfies the slack conditions of Target~\ref{tr:lower};
   \item the policy step is idealized ($N\to\infty$, $\varepsilon=0$), which isolates the cost of
         human labels.
 \end{itemize}
-Over the class $\mathcal F_\theta^{\kappa}$ of Target~\ref{tr:lower},
-\[
-  \inf_{\text{design},\ \text{procedure}}\ \sup_{\mathcal F_\theta^{\kappa}}\
-  \E\Bigl[R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\Bigr]
-  \;\asymp_\kappa\;\gamma_1^{\frac{2d}{2\gamma_2+d}}\,n^{-\frac{2\gamma_2}{2\gamma_2+d}}+\frac1n ,
-\]
-where the procedure uses $n$ revealed human labels and the judge on the pool.
+Admissible procedures choose the $n$ revealed labels by any pool-based design, sequential or not,
+and then output a policy. Then:
+\begin{enumerate}[label=(\roman*)]
+  \item \emph{fixed-class minimax rate:}
+        \[
+          \inf\,\sup_{\mathcal F^{\kappa}(\theta^{*},\gamma)}\E\bigl[R(\hat\vartheta;p_X)-\inf_\vartheta R(\vartheta;p_X)\bigr]
+          \asymp_\kappa\gamma_1^{\frac{2d}{2\gamma_2+d}}n^{-\frac{2\gamma_2}{2\gamma_2+d}}+\frac1n .
+        \]
+        The upper bound is
+        attained by \dfsp{} with $(\theta,h)$ tuned to the class, followed by
+        Proposition~\ref{prop:bridge-fast}.
+  \item \emph{adaptive procedure:} with $(\hat\theta,\hat h)$ chosen on validation data, the same holds
+        up to the $(\log n)^2/n$ remainder of Target~\ref{tr:oracle}. This remainder dominates when
+        $\gamma_1$ is very small, so the adaptive procedure does not attain the sharp $1/n$ regime.
+\end{enumerate}
 \end{target}
 
-\emph{Upper bound:} \dfsp{} (Targets~\ref{tr:upper} and~\ref{tr:oracle}) followed by
-Proposition~\ref{prop:bridge-fast}. \emph{Lower bound:} Pinsker's inequality gives excess
+\emph{Lower bound:} Pinsker's inequality gives excess
 $=\E\,\KL(\Ber(p_X)\,\|\,\Ber(\sigma(d_{\hat\vartheta})))\ge2\,\E\{\sigma(d_{\hat\vartheta})-p_X\}^2$.
-The policy therefore induces an estimator $\sigma(d_{\hat\vartheta})$ of $p_H^{*}$ from $n$ labels.
-Under the forest and richness conditions every member of $\mathcal F_\theta^{\kappa}$ is realizable,
-so Target~\ref{tr:lower} applies without shrinking the class. \emph{Message:} the human-label cost of
-post-training scales with the complexity $\gamma$ of the judge-to-human discrepancy, not with the
-complexity $\theta^{*}$ of human preference itself, and this cannot be improved.
+The policy therefore induces an estimator $\sigma(d_{\hat\vartheta})$ of $p_H^{*}$ from $n$ adaptively
+chosen labels. Under the forest and richness conditions every member of
+$\mathcal F^{\kappa}(\theta^{*},\gamma)$ is realizable, so Target~\ref{tr:lower}, which covers sequential
+designs, applies without shrinking the class.
+
+\emph{Status:} under sufficiency, realizability and an idealized policy step, the policy problem
+reduces to bounded Bernoulli regression through the KL--MSE equivalence. The corollary is a useful
+translation of Target~\ref{tr:lower} into post-training language. It is not an independent
+resolution of realistic policy-learning difficulty, where $\varepsilon$, non-convexity and the
+coarsening gap dominate.
 
 \keybox{\textbf{\textcolor{BrickRed}{Design decision D2: data reuse.}} (a) Cross-fit: split the pool
 into two folds, fit \dfsp{} on one fold's revealed labels, and produce targets on the other.

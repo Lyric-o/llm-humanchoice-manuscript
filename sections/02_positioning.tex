@@ -59,10 +59,15 @@ full panels of noisy judges with proper scoring rules; this is a natural calibra
 Method~I. \citet{lail2026decomposing} targets expert labels using the epistemic part of judge
 uncertainty; this is a baseline for Method~II.
 
-\keybox{\textbf{Claimed gap.} Few-shot personalization of a \emph{graded, distribution-valued}
-black-box judge, with minimax guarantees for \emph{bounded} preference targets and a population-risk
-label design, carried through to an end-to-end minimax rate for the post-trained policy's excess
-preference risk (Target~\ref{tr:e2e}).}
+\keybox{\textbf{Claimed gap.} Few-shot personalization of a \emph{graded, two-order,
+distribution-valued} black-box judge, carried through to post-training, with three parts:
+(i) a calibrated test of whether the judge distribution carries human-relevant information beyond
+$p_J$, and measured label savings when it does;
+(ii) a population-risk label design;
+(iii) guarantees for bounded preference targets that translate into the policy's excess preference
+risk.
+The theory is supporting: its rates are routine or corollaries (Remark~\ref{rem:novelty-theory}).
+The paper stands on (i) and (ii).}
 
 We did not find prior work that establishes this complete chain. We treat it as a
 \emph{novelty hypothesis} that must be re-checked before submission. DIAL \citep{cai2026dial},

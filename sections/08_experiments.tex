@@ -9,12 +9,20 @@ human-subject data are collected.
 \begin{itemize}
   \item \textbf{Dataset.} \todo{name, size, label structure (binary / graded / multi-annotator),
         availability of prompt and response texts, license}. E0 must be finished before any main
-        experiment starts. Check the per-prompt forest condition of
-        Section~\ref{sec:post-training} as part of E0.
-  \item \textbf{Splits.} Split by prompt into an untouched test set $\mathcal T$ (20\%) and the pool
-        (80\%, size $N$), before any acquisition, E2-driven choice or policy training. All
-        estimation, acquisition and policy metrics are computed on $\mathcal T$. Every arm, including
-        the all-human reference, trains on the pool only.
+        experiment starts.
+  \item \textbf{Feasibility pilot (no human labels).} Run J1 on about $500$ comparisons and check four
+        things: that $(p_J,t_J,o_J)$ fill a regular subset of the polytope $\cZ$; that
+        $\E\,\mathrm{Var}(t_J\mid p_J,S)>0$ and $\E\,\mathrm{Var}(o_J\mid p_J,S)>0$ within task
+        strata $S$; the per-prompt forest condition (Section~\ref{sec:post-training}); and judge
+        cost. The representation (Design D1) and all budgeted procedures, including grids and
+        learners, are frozen after this pilot.
+  \item \textbf{Splits,} all by prompt and all made before any acquisition or training. An untouched
+        test set $\mathcal T$ (20\%) is used only for final reporting. A development split
+        $\mathcal V$ (10\%) is used for any pipeline tuning ($\beta$, $D$, grids). A diagnostic split
+        $\mathcal G$ (20\%) is used only for E2. The pool (50\%, size $N$) is where budgeted
+        procedures reveal labels and every policy arm trains, including the all-human reference.
+        Labels in $\mathcal G$ never enter a budgeted procedure; E2 affects only how results are
+        reported and framed.
   \item \textbf{Judges.} J1 (primary) and J2 (secondary, E5 only) as defined in
         Section~\ref{sec:setup}. \todo{judge model(s); J1 needs token-level log-probabilities}.
   \item \textbf{Localization.} $Z_s=(p_J)$ and $Z_d=(p_J,t_J,o_J)$, stratified by task category.
@@ -37,15 +45,25 @@ empirical human distribution on multi-annotator items.\\
 \subsection{\texorpdfstring{E2: Does the judge distribution carry information beyond $p_J$?}{E2: Does the judge distribution carry information beyond p\_J?}}
 
 \begin{enumerate}[label=(\alph*)]
-  \item \emph{Inference on $G$.} Using pool labels only, estimate the variable importance $G$ of
-        $(t_J,o_J)$ given $p_J$ (Proposition~\ref{prop:scalar-vs-dist}). Use the cross-fitted,
-        algorithm-agnostic estimator of \citet{williamson2023general}, including its sample-splitting
-        version for the zero-importance null. The hypothesis and nuisance learners are fixed in
-        advance. A fitted-score comparison is \emph{not} used as a test: its expectation is
+  \item \emph{Inference on $G$} (on $\mathcal G$ only). Estimate the variable importance $G$ of
+        $(t_J,o_J)$ given $(p_J,S)$ (Proposition~\ref{prop:scalar-vs-dist}), conditioning on the same
+        strata $S$ the estimators use. Use the cross-fitted, algorithm-agnostic estimator of
+        \citet{williamson2023general}, with its sample-splitting version for the zero-importance
+        null. Nuisance learners are fixed in advance: gradient-boosted trees and a
+        generalized additive model on $(p_J,t_J,o_J)$ within strata. Valid inference needs
+        $o_P(m^{-1/4})$ nuisance rates. A generic three-dimensional Lipschitz model gives only
+        $m^{-1/5}$, so the test is justified only if the regression function is smoother
+        ($\beta>d/2$) or nearly additive. We state this as an assumption and do not claim it. A
+        fitted-score comparison is \emph{not} used as a test: its expectation is
         $G+R(\hmu_s)-R(\hmu_d)$.
-  \item \emph{Calibration of the test.} A synthetic study keeps the real judge outputs but replaces
-        the human labels with draws from $\Ber(g(p_J))$ (so $G=0$) and from $\Ber(g(p_J)+c\,t_J)$
-        (so $G>0$). It reports size and power of (a) at the pool sizes used.
+  \item \emph{Calibration of the test.} A synthetic study keeps the real judge outputs of
+        $\mathcal G$ and replaces the human labels with draws from
+        $\operatorname{logit}P(Y=1)=\operatorname{logit}g(p_J,S)+c\,\{t_J-\E(t_J\mid p_J,S)\}$. Here $g$
+        and $\E(t_J\mid p_J,S)$ are fitted on judge outputs only, and the logit link keeps
+        probabilities in $(0,1)$. Taking $c=0$ gives $G=0$. Taking $c\neq0$ gives $G>0$ exactly when
+        $\E\,\mathrm{Var}(t_J\mid p_J,S)>0$, which the feasibility pilot checks; $G$ is computed by
+        Monte Carlo. Size and power of (a) are reported across smooth and rough choices of $g$. If
+        the size is not controlled, the inference in (a) is reported as exploratory.
   \item \emph{Procedure comparison.} Compare \sfsp{} and \dfsp{} as prediction procedures across $n$,
         on $\mathcal T$. The crossover budget is reported as an empirical finding, not predicted from
         upper bounds.
@@ -65,23 +83,27 @@ Two kinds of corruption are kept separate.
 \begin{itemize}
   \item \emph{Offset corruption:} corrupt only $\mJ$ and keep $Z$ fixed. (a) Constant logit shift
         $b$; (b) overconfidence, $\operatorname{logit}\mJ\mapsto\tau\operatorname{logit}\mJ$ with
-        $\tau>1$; (c) region-wise reversal $\mJ\mapsto1-\mJ$ within one task stratum; (d) noise
+        $\tau>1$; (c) reversal $\mJ\mapsto1-\mJ$ on a region of the continuous covariates, e.g.\
+        $\{p_J>0.7\}$ within each stratum; (d) noise
         mixing toward a random prediction with weight $\epsilon$.
   \item \emph{Representation corruption:} apply the same corruptions to the full $\QJ$, so that $Z$
         also changes.
 \end{itemize}
-\textbf{Predictions.} Under offset corruption, (a) and (b) give smooth discrepancies, so \dfsp{}
-should keep most of its gain. (c) gives a discontinuous discrepancy within its stratum, so
-$\hat\theta_1$ should shrink there. In (d), as $\epsilon\to1$, \dfsp{} should approach the human-only
-estimator on the same $Z$, as Target~\ref{tr:oracle} predicts. Under representation corruption,
-no-harm relative to an uncorrupted $Z$ is \emph{not} expected; the size of this gap is reported. We
-report the path of $\hat\theta$ throughout.
+\textbf{Empirical hypotheses (not theorems).} Under offset corruption, (a) and (b) give smooth
+discrepancies, so \dfsp{} should keep most of its gain. (c) creates a jump in the discrepancy at
+$p_J=0.7$, so the selected $\hat\theta_1$ should decrease. In (d), as $\epsilon$ grows, \dfsp{} should
+move toward the human-only estimator on the same $Z$. Target~\ref{tr:oracle} bounds risk relative to
+the best candidate. It does not predict a monotone path of $\hat\theta_1$ or exact convergence. Under
+representation corruption, no-harm relative to an uncorrupted $Z$ is not expected, and the size of
+this gap is reported.
 
 \subsection{E5: Judge budget (exploratory)}
 
-With protocol J2, vary $M\in\{1,2,4,\dots,64\}$ and compare the saturation of the \dfsp{} test error
-with the oracle information-loss bound of Proposition~\ref{prop:judge-budget}. No estimator-level
-claim is made.
+With protocol J2, vary $M\in\{1,2,4,\dots,64\}$ and record how the \dfsp{} test error saturates.
+This is a purely empirical budget study. Proposition~\ref{prop:judge-budget} needs a representation
+that determines its own sampling law, such as the full order-specific probability vectors. The
+compressed summary $(p_J,t_J,o_J)$ does not, so the proposition is not used as a quantitative
+prediction here.
 
 \subsection{E6: Post-training}
 
@@ -115,15 +137,19 @@ $N$ pool human labels. Each arm is run at 2--3 budgets with 3 seeds.
 \textbf{Headline plot.} P1 and P2 versus human-label budget, with the all-human DPO reference as a
 horizontal line.
 
+\emph{Use of test outcomes.} Gates G2 and G3 below read $\mathcal T$. Their outcomes may change how
+results are reported or framed. They never change a budgeted procedure; any further tuning uses
+$\mathcal V$.
+
 \subsection{Decision gates}
 
 \begin{description}[leftmargin=0.9cm,style=nextline]
-  \item[G1] \emph{After E0/E2(a--b), on pool data only.} Is $G$ significantly positive under a test
+  \item[G1] \emph{After E0/E2(a--b), on $\mathcal G$ only.} Is $G$ significantly positive under a test
         with verified size? If not, reframe the paper around \sfsp{}, the design theory and the
         bridge, and report the negative result.
   \item[G2] \emph{After E1.} Does \dfsp{} or \sfsp{} beat the linear map and isotonic recalibration at
-        $n/N\le5\%$ on $\mathcal T$? If not, the nonparametric machinery is not paying off; center the
-        paper on Targets~\ref{tr:lower}, \ref{tr:design} and~\ref{tr:e2e}.
+        $n/N\le5\%$ on $\mathcal T$? If not, the nonparametric machinery is not paying off, and the
+        paper reports that as the finding.
   \item[G3] \emph{After the E6 pilot.} Does the Brier gain carry over to P1? If not, check whether the
         bounded-scorer regime of Proposition~\ref{prop:bridge} is the operative one.
 \end{description}

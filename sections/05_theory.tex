@@ -117,7 +117,9 @@ This result has three limits.
 
 \begin{assumption}[Regularity]
 \label{ass:reg}
-The continuous part of $Z$ ranges over $\cZ=[0,1]^d$ (after stratifying on discrete features).
+The continuous part of $Z$ ranges over a compact set $\cZ\subset\R^d$ (after stratifying on discrete
+features), such as the polytope of Section~\ref{sec:setup}, with the interior cone condition
+$\mathrm{vol}\{B_\infty(z,h)\cap\cZ\}\ge c_{\cZ}h^d$ for all $z\in\cZ$ and $h\le1$.
 \begin{enumerate}[label=(\alph*)]
   \item $\norm{\muH(z)-\muH(z')}_{\cH}\le\theta_1^{*}\norm{z-z'}^{\theta_2^{*}}$ with
         $0<\theta_2^{*}\le1$.
@@ -126,8 +128,9 @@ The continuous part of $Z$ ranges over $\cZ=[0,1]^d$ (after stratifying on discr
   \item \emph{Nondegeneracy:} $\sigma(z)\ge\sigma_{\min}>0$. For binary labels this holds when
         $p_H^{*}\in[\kappa,1-\kappa]$, with $\sigma_{\min}^2=\kappa(1-\kappa)$.
   \item \emph{Design and occupancy:} revealed points have a design density $p_Z$ with
-        $c_p\le p_Z\le C_p$ on $\cZ$; the evaluation density $q$ satisfies $c_q\le q\le C_q$; and
-        the bandwidth satisfies $nh^d\ge C\log n$.
+        $c_p\le p_Z\le C_p$ on $\cZ$; the evaluation density $q$ satisfies $c_q\le q\le C_q$ on
+        $\cZ$; and the bandwidth satisfies $nh^d\ge C\log n$. With the cone condition, every window
+        then holds $\gtrsim nh^d$ design points with high probability.
 \end{enumerate}
 \end{assumption}
 
@@ -156,23 +159,49 @@ $nh^d\ge C\log n$,
 
 \begin{target}[Minimax lower bound for bounded preference probabilities]
 \label{tr:lower}
-Consider binary labels, and a \emph{fixed} judge (not part of the supremum) with interior slack,
-$\mJ(z)\in[2\kappa,1-2\kappa]$. Let $\mathcal F_\theta^{\kappa}$ be the subclass of
-$\mathcal F_\theta(\theta^{*},\gamma,\cdot)$ with $p_H^{*}\in[\kappa,1-\kappa]$, and assume
-$\gamma_1\le\kappa$. Take $0\le\theta_1\le C\theta_1^{*}$ and $\theta_2\ge\theta_2^{*}$. Then for
-$n\ge n_0(\kappa)$, the infimum over designs and over estimators with access to $\mJ$ satisfies
+Consider binary labels and a \emph{fixed} judge (not part of the supremum) that satisfies:
+\begin{itemize}
+  \item \emph{probability slack:} $\mJ(z)\in[2\kappa,1-2\kappa]$;
+  \item \emph{regularity slack:} $\mJ\in\mathcal H(\theta_1^{*}/2,\theta_2^{*})$ on $\cZ$.
+\end{itemize}
+Take the smoothing parameter $\theta=(\theta_1^{*}/2,\theta_2^{*})$. By
+Lemma~\ref{lem:smoothing}(iv) it leaves the judge unchanged, so
+$\delta_{\theta,z}=p_H^{*}-\mJ$ for every $z$. Let $\mathcal F^{\kappa}(\theta^{*},\gamma)$ be the class
+of $p_H^{*}=\mJ+\delta$ with $p_H^{*}\in[\kappa,1-\kappa]\cap\mathcal H(\theta^{*})$ and
+$\delta\in\mathcal H(\gamma)$. Assume the compatibility conditions
 \[
-  \inf_{p_Z,\hat p}\;\sup_{\mathcal F_\theta^{\kappa}}\;R(\hat p)\;\gtrsim_\kappa\;
+  \gamma_2\ge\theta_2^{*},\qquad \gamma_1\le\min\{\kappa/2,\ c_{\cZ}'\theta_1^{*}/2\},
+\]
+where $c_{\cZ}'=\mathrm{diam}(\cZ)^{\theta_2^{*}-\gamma_2}$ converts $\mathcal H(\gamma)$ into a
+H\"older-$\theta_2^{*}$ bound. Then for $n\ge n_0(\kappa)$,
+\[
+  \inf_{\text{design},\,\hat p}\;\sup_{\mathcal F^{\kappa}(\theta^{*},\gamma)}\;R(\hat p)\;\gtrsim_\kappa\;
   \gamma_1^{\frac{2d}{2\gamma_2+d}}\,n^{-\frac{2\gamma_2}{2\gamma_2+d}}+\frac1n .
 \]
+The infimum runs over all pool-based designs, including sequential ones that choose each query
+from past answers, and over all estimators with access to $\mJ$.
 \end{target}
 
-The slack is necessary. With $\mJ(z)=z$ on $[0,1]$ and $\gamma_1=0$, the class forces
-$p_H^{*}(z)=z+c$, and the endpoint constraints force $c=0$. The class is then a single point with
-minimax risk zero, although $\bar\sigma=\pi/8$. For binary labels, $\bar\sigma$ is not a free
-parameter, since it is determined by $p_H^{*}$, which is why the bound is stated without it. The
-proof must build the packing inside the slack: bump amplitudes $\le\gamma_1h^{\gamma_2}\le\kappa$, and
-the parametric part from constant shifts of size $n^{-1/2}\le\kappa$.
+\paragraph{Why each condition is needed.} Round-1 and round-2 review produced three
+counterexamples.
+\begin{itemize}
+  \item \emph{No probability slack.} With $\mJ(z)=z$ on $[0,1]$ and $\gamma_1=0$, the endpoints force
+        $p_H^{*}=\mJ$. The class is a single point with risk zero.
+  \item \emph{Incompatible exponents.} With $\gamma_2<\theta_2^{*}$, every member of the class is
+        $\theta^{*}$-smooth. Human-only regression then beats the displayed ``lower bound''.
+  \item \emph{No regularity slack.} If the judge's own H\"older constant equals $\theta_1^{*}+\gamma_1$
+        (for example $\mJ=0.4+0.15z$, $\theta_1^{*}=0.10$, $\gamma_1=0.05$), the two Lipschitz
+        constraints force $p_H^{*}=a+0.10z$. Only an intercept is unknown, so the rate is $1/n$.
+\end{itemize}
+
+\paragraph{Proof plan.} Use Assouad's lemma with bumps inside the slack. The packing is
+$p_H^{*}=\mJ+c+\sum_k\omega_k\gamma_1h^{\gamma_2}\varphi((z-z_k)/h)$ with disjoint supports, a
+constant $|c|\le n^{-1/2}\le\kappa/2$, and $\sum$bumps$\le\kappa/2$. Its H\"older-$\gamma$ norm is
+$\le\gamma_1$; its H\"older-$\theta^{*}$ norm is at most $\theta_1^{*}/2+\gamma_1/c'_{\cZ}\le\theta_1^{*}$; and
+it stays inside $[\kappa,1-\kappa]$. Sequential designs are covered because each query informs at
+most one bump, as in the active-learning lower bounds of \citet{castro2005faster}. They show that for
+H\"older classes, active and passive sampling share the same minimax rate. \emph{Consequence for
+Method~II:} design can improve constants but not the rate.
 
 \begin{target}[Adaptation and no harm]
 \label{tr:oracle}
@@ -190,20 +219,22 @@ As in Examples~1--2 of \citet{li2026personalizing}, borrowing helps when the dis
 smaller H\"older constant than the target ($\gamma_1(\theta)\ll\theta_1^{*}$; for example, a nearly
 calibrated judge) or a higher smoothness order ($\gamma_2(\theta)>\theta_2^{*}$).
 
-\begin{remark}[Which theory is routine and which carries the paper]
+\begin{remark}[What carries the paper]
 \label{rem:novelty-theory}
 \citet{li2026personalizing} already cover binary classification (their Section~5.2), so for a
 binary human label their scalar predictor already estimates a Bernoulli distribution. Targets
-\ref{tr:upper} and \ref{tr:oracle} should be routine coordinatewise extensions. Enlarging $K$ or
-using a kernel embedding brings no new variance phenomenon, since $\norm{\phi}\le1$ makes averaging
-dimension-free. The theoretical weight of the paper therefore rests on three results:
+\ref{tr:upper} and \ref{tr:oracle} should be routine extensions. Target~\ref{tr:lower} is a careful
+but standard Assouad construction; its content is the list of conditions under which a fixed,
+bounded judge makes the problem easier. Target~\ref{tr:e2e} is a corollary. The paper therefore
+cannot be carried by rates alone. It rests on:
 \begin{itemize}
-  \item Target~\ref{tr:lower}: minimax lower bounds for \emph{bounded} preference targets with a
-        fixed judge, where boundary constraints interact with the judge;
-  \item Target~\ref{tr:design}: finite-pool adaptive design under the population risk;
-  \item Target~\ref{tr:e2e}: the end-to-end minimax rate for judge-assisted preference
-        optimization, which combines both with the bridge of Section~\ref{sec:post-training}.
+  \item an \emph{empirical finding}: whether a graded, two-order judge distribution carries
+        human-relevant information beyond $p_J$ ($G>0$, E2), and whether this translates into label
+        savings and better policies (E1, E6);
+  \item a \emph{useful acquisition result} under the population risk (Target~\ref{tr:design}). It
+        improves constants, not rates.
 \end{itemize}
-The propositions in Sections~\ref{sec:scalar-vs-dist}--\ref{sec:judge-budget} and~\ref{sec:post-training}
-are elementary and serve as tools.
+The theory supplies the vocabulary and the guarantees that make these findings interpretable. The
+propositions in Sections~\ref{sec:scalar-vs-dist}--\ref{sec:judge-budget} and~\ref{sec:post-training}
+are elementary tools.
 \end{remark}

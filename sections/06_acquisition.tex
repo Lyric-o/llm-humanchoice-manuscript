@@ -70,22 +70,38 @@ comparisons occur, not merely where the judge disagrees with humans or is unsure
 The validation set comes from the uniform pilot, so the adaptation step of Section~\ref{sec:dfsp}
 needs no importance weighting.
 
-\begin{target}[Finite-pool adaptive design]
+\paragraph{What the calculation does and does not give.}
+Equation~\eqref{eq:design} minimizes a risk \emph{upper bound} built from a H\"older bias envelope. The
+bound need not be tight: a locally linear discrepancy has zero interior bias under symmetric
+averaging, even though its local Lipschitz constant is positive. So minimizing the envelope does not
+prove that actual risk improves. By \citet{castro2005faster}, no design, active or passive, changes
+the \emph{rate} for H\"older classes. Method~II is about constants.
+
+\begin{target}[Conditional guarantee for the mixed plug-in design]
 \label{tr:design}
-Assume the following:
+Let $J(p)=\int qA\,p^{-\alpha}$ with $\alpha=2\gamma_2/(2\gamma_2+d)$. Assume:
 \begin{itemize}
   \item the pilot estimates are consistent,
         $\norm{\hat\sigma-\sigma}_\infty+\norm{\hat\gamma_1-\gamma_1}_\infty+\norm{\hat q-q}_\infty\to0$ in
-        probability, with $\gamma_1$ and $\sigma$ bounded away from $0$ where $q>0$;
-  \item overlap holds, $\tilde p/q\in[\eta,\eta^{-1}]$;
+        probability, with $\sigma,\gamma_1$ bounded away from $0$ on $\cZ$;
+  \item finite-pool feasibility, $\sup_z(n/N)\,\tilde p(z)/q(z)\le1-c$, so that weighted sampling
+        without replacement can realize $\tilde p$ up to constants;
   \item the pool covers every window, $Nh^dc_q\gg\log N$.
 \end{itemize}
-Then the plug-in design with a locally adaptive bandwidth attains the oracle-design risk in
-\eqref{eq:design} up to a factor $1+o(1)$ and logarithmic terms. It improves on uniform pool sampling
-by the ratio of the two integrals in \eqref{eq:design}, which exceeds one whenever
-$\gamma_1^{2d}\sigma^{4\gamma_2}q^{-2\gamma_2}$ is not constant on $\{q>0\}$. We do not claim improvement
-without these conditions.
+Then \dfsp{} with a locally adaptive bandwidth under the design $\tilde p$ satisfies the upper bound
+\[
+  R\;\lesssim\;\{(1-c_0)n\}^{-\alpha}\,(1-\eta)^{-\alpha}\,J(p^{*})\;+\;\text{pilot and log terms}.
+\]
+Here $c_0$ is the pilot fraction, and $(1-\eta)^{-\alpha}$ is the price of the defensive mixture, since
+$\tilde p\ge(1-\eta)p^{*}$ gives $J(\tilde p)\le(1-\eta)^{-\alpha}J(p^{*})$.
 \end{target}
+
+The corresponding uniform-design bound replaces $J(p^{*})$ by $J(q)$. The comparison
+$J(p^{*})<J(q)$ is a statement about \emph{upper bounds}. It holds strictly iff
+$\gamma_1^{2d}\sigma^{4\gamma_2}q^{-2\gamma_2}$ is not constant on $\{q>0\}$. It is not a proved
+improvement in actual risk. Two things remain open: consistency of the local-complexity estimator
+$\hat\gamma_1$, and whether $\eta=\eta_n\to0$ can recover the oracle constant. E3 is the empirical
+test of whether the bound improvement shows up in actual risk.
 
 \paragraph{Baselines.}
 Random reveal; judge uncertainty (entropy of $\QJ$, or $|p_J-\tfrac12|$); disagreement-targeted

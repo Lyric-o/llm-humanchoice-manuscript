@@ -67,7 +67,9 @@ Define
 \end{align}
 where $\Pi_{\cM}$ is the metric projection onto $\cM$. The projection is a clip to $[0,1]$ in the binary
 case, a sort-based projection onto the simplex in the categorical case, and isotonic regression
-followed by clipping to $[0,1]$ in the ordinal (CDF) case.
+followed by clipping to the scaled CDF range $[0,(K-1)^{-1/2}]$ in the ordinal case. (With the
+normalization of Section~\ref{sec:setup}, clipping at $1$ would not be the metric projection.) The
+main method uses the binary case.
 
 \begin{lemma}
 \label{lem:estimator}

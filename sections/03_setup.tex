@@ -51,7 +51,10 @@ question is meaningful only for a richer protocol. We therefore commit to the fo
         are continuous.
   \item \textbf{J2 (secondary): sampled.} The same five-label prompt is sampled $M$ times in each
         order, giving empirical frequencies on a grid of step $1/M$. J2 is used only in the
-        judge-budget experiment (E5).
+        judge-budget experiment (E5). E5 is purely empirical: the summaries below do not determine
+        the sampling law of their $M$-sample estimates (for example, the variance of $\hat t_J$
+        depends on the two order-specific tie masses separately), so
+        Proposition~\ref{prop:judge-budget} does not apply to them.
 \end{itemize}
 
 \paragraph{Judge prediction and link.}
@@ -78,11 +81,25 @@ continuous coordinates. The scalar and distributional variants always use the sa
 \[
   Z_s=(p_J,\xi),\qquad Z_d=(p_J,t_J,o_J,\xi)\ \text{(default; $s_J$ is an ablation)}.
 \]
-We require $\mJ(X)$ to be a function of $Z$, which holds because $p_J$ is a coordinate. We then write
-$\mJ(z)$. The continuous coordinates of $Z$ must have a density on their range for the theory of
-Section~\ref{sec:theory} to apply. Under J1 this is plausible and will be checked empirically: if
-$t_J$ concentrates near $0$, the effective dimension drops. Under J2 it fails, since the coordinates
-live on a grid.
+\paragraph{Scope: binary human labels.}
+The main method targets binary human labels. Its offset is $\mJ=p_J$, which is a coordinate of
+$Z$, so $\mJ(z)$ is well defined. For graded human labels this fails: the graded offset depends on
+the full order-averaged five-label vector, and $(p_J,t_J,o_J)$ does not determine that vector. (Two
+vectors can share $p_J=.5$, $t_J=.2$, $o_J=0$ and even the same strength mass, yet have different
+CDFs.) Graded human targets are therefore an extension, which would need $Z$ to contain the whole
+vector ($d=4$ after the simplex constraint). They are not part of the main plan.
+
+\paragraph{Feasible support.}
+The coordinates are deterministically constrained:
+$w(Q)\in[\tfrac12Q(\text{tie}),1-\tfrac12Q(\text{tie})]$ gives $t_J\le2\min(p_J,1-p_J)$ and
+$o_J\le1-t_J$. The support of $(p_J,t_J,o_J)$ therefore lies in the polytope
+\[
+  \cZ=\{(p,t,o):\ 0\le t\le2\min(p,1-p),\ 0\le o\le1-t\}\subsetneq[0,1]^3 ,
+\]
+which has nonempty interior. The theory of Section~\ref{sec:theory} is stated on $\cZ$ (or on a
+regular subset of it), not on the cube. Density estimation, occupancy and acquisition use the same
+support. Under J1 the coordinates are continuous. Whether they fill a regular subset of $\cZ$ is
+checked in the E0 feasibility pilot; if $t_J$ concentrates near $0$, the effective dimension drops.
 
 \paragraph{Estimand.}
 \[
@@ -93,6 +110,8 @@ and the coarsening gap $B_\zeta=\E\norm{\muH(Z)-\mu_X}^2$ is irreducible for any
 only $Z$ (Section~\ref{sec:scalar-vs-dist}).
 
 \keybox{\textbf{\textcolor{BrickRed}{Design decision D1: the localization variable $\zeta$.}}
-Default: $Z_d=(p_J,t_J,o_J)$, stratified by task category, so $d=3$. A high-dimensional content
-embedding is excluded from the main method because of the curse of dimensionality. If $t_J$ or
-$o_J$ turns out to be nearly degenerate on the pool, drop it before any test-set evaluation.}
+Default: $Z_d=(p_J,t_J,o_J)$ on the polytope $\cZ$, stratified by task category, so $d=3$. A
+high-dimensional content embedding is excluded from the main method because of the curse of
+dimensionality. The representation is frozen after the E0 feasibility pilot, using judge outputs
+only and no human labels. If $t_J$ or $o_J$ is nearly degenerate there, it is dropped at that
+point.}
